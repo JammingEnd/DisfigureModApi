@@ -1,10 +1,12 @@
-﻿using System;
+﻿using DisfigurwModApi.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
-namespace DisfigureTestMod.Weapons
+namespace DisfigurwModApi.Weapons
 {
     /// <summary>
     /// Base weapon class
@@ -29,6 +31,34 @@ namespace DisfigureTestMod.Weapons
         {
 
         }
+
+       
+    }
+    public class WeaponUtils
+    {
+        public static bool isActiveWeapon(string weaponRef)
+        {
+            bool canperform = false;
+            foreach (var weapon in NewWeaponInitiator.newWeapons)
+            {
+                if (weapon.Value && weapon.Key.weaponReference == weaponRef)
+                {
+                    canperform = true;
+                }
+            }
+            return canperform;
+        }
+    }
+
+    public class WeaponPreviewStats
+    {
+        public string WeaponName;
+        public string WeaponDescription;
+        public float WeaponDamage;
+        public float WeaponFireRate;
+        public float BulletSpeed;
+        public float BulletSize;
+
     }
 
     public class  NewWeaponInitiator

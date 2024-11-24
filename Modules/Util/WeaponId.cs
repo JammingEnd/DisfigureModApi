@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DisfigureTestMod.Util
+namespace DisfigurwModApi.Util
 {
     /// <summary>
     /// The number corresponds to the Preview instance in the displaymanager

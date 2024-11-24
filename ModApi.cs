@@ -1,12 +1,12 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using DisfigureTestMod.UImanipulation;
+using DisfigurwModApi.UImanipulation;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 
-namespace DisfigureTestMod
+namespace DisfigurwModApi
 {
     [BepInPlugin("com.disfigure.modapi", "DisfigureModApi", "1.0.0")]
     public class ModApi : BasePlugin

@@ -1,6 +1,6 @@
-﻿
-using DisfigureTestMod.Util;
-using DisfigureTestMod.Weapons;
+﻿using DisfigureModApi.Modules.DamageControl;
+using DisfigurwModApi.Util;
+using DisfigurwModApi.Weapons;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace DisfigureTestMod
+namespace DisfigurwModApi
 {
     public class Patcher
     {
@@ -49,7 +49,7 @@ namespace DisfigureTestMod
                 NewWeaponInitiator.newWeapons[item.Key] = false;
             }
 
-            // Set the selected weapon to true 
+            // Set the selected weapon to true
             // for all (currently) buttons
             if (__instance.gameObject.name == "GunButton (27)")
             {
@@ -111,6 +111,7 @@ namespace DisfigureTestMod
         /// Activates when you load into the Map, used for setting up weapons and player stats
         /// </summary>
         public static event Action<PlayerStats, WeaponManager> OnGameStart;
+
         public static void Postfix(ObjectPool __instance)
         {
             PlayerStats player = __instance.pS;
@@ -121,7 +122,6 @@ namespace DisfigureTestMod
                 player.circleVisionLength *= 3;
 
                 OnGameStart?.Invoke(player, weaponManager);
-                
 
                 ModApi.Log.LogMessage(weaponManager);
             }
@@ -142,7 +142,11 @@ namespace DisfigureTestMod
                 $" || " +
                 $"{__instance.statName2} by {__instance.change2}" +
                 $" || " +
-                $"{__instance.statName3} by {__instance.change3}"
+                $"{__instance.statName3} by {__instance.change3}" +
+                " || " +
+                $"{__instance.statName4} by {__instance.change4}" +
+                $" || " +
+                $"{__instance.statName5} by {__instance.change5}"
                 );
         }
     }

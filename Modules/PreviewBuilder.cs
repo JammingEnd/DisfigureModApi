@@ -1,4 +1,5 @@
-﻿using DisfigureTestMod.Util;
+﻿using DisfigurwModApi.Util;
+using DisfigurwModApi.Weapons;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DisfigureTestMod.UImanipulation
+namespace DisfigurwModApi.UImanipulation
 {
     public static class PreviewBuilder
     {
@@ -23,29 +24,28 @@ namespace DisfigureTestMod.UImanipulation
         /// <param name="bulletSpeedStat"> The new bullet speed (1 = 10 units per second, pistol damage is 50) </param>
         /// <param name="bulletSizeStat"> The starting bullet size </param>
         /// <param name="newSprite"> The new image(s) being displayed </param>
-        /// <param name="isMelee"> Is it an melee weapon? default : False </param>
+        /// <param name="isMelee"> Is it an melee weapon? </param>
         /// <returns> An edit / new weapon. !!! these are used in the actual game too </returns>
-        public static GameObject BuildPreview(this GameObject baseWeapon, string newName, string newDesc, float damageSliderStat, float fireRateStat, float bulletSpeedStat, float bulletSizeStat, WeaponId newSprite, List<GameObject> currentAvaibleClones, bool isMelee = false)
+        public static GameObject BuildPreview(this GameObject baseWeapon, WeaponPreviewStats stats, WeaponId newSprite, List<GameObject> currentAvaibleClones, bool isMelee)
         {
             // This is where the preview will be built
             GameObject baseWeaponObject = baseWeapon;
-            bulletSpeedStat *= 10;
+            stats.BulletSpeed *= 10;
             if (!isMelee)
             {
-                baseWeaponObject.transform.GetChild(7).GetComponent<Text>().text = newName;
-                baseWeaponObject.transform.GetChild(3).GetComponent<Text>().text = newDesc;
+                baseWeaponObject.transform.GetChild(7).GetComponent<Text>().text = stats.WeaponName;
+                baseWeaponObject.transform.GetChild(3).GetComponent<Text>().text = stats.WeaponDescription;
                 weaponstatsliders slider = baseWeaponObject.transform.GetChild(10).GetComponent<weaponstatsliders>();
-                slider.projectile.damage = damageSliderStat;
-                slider.projectile.fireRate = fireRateStat;
-                slider.projectile.projSpeed = bulletSpeedStat;
-                slider.projectile.ogSize *= bulletSizeStat;
-                slider.bulletDamageStat = damageSliderStat;
-                slider.fireRateStat = fireRateStat;
-                slider.bulletSpeedStat = bulletSpeedStat;
-                slider.bulletSizeStat = bulletSizeStat;
+                slider.projectile.damage = stats.WeaponDamage;
+                slider.projectile.fireRate = stats.WeaponFireRate;
+                slider.projectile.projSpeed = stats.BulletSpeed;
+                slider.projectile.ogSize *= stats.BulletSize;
+                slider.bulletDamageStat = stats.WeaponDamage;
+                slider.fireRateStat = stats.WeaponFireRate;
+                slider.bulletSpeedStat = stats.BulletSpeed;
+                slider.bulletSizeStat *= stats.BulletSize;
 
                 Image retrievedImg = currentAvaibleClones[(int)newSprite].transform.GetChild(6).GetComponent<Image>();
-                ModApi.Log.LogMessage("Retrieved image: " + retrievedImg.sprite.name);
 
                 Image imageBright = baseWeaponObject.transform.GetChild(6).GetComponent<Image>();
                 imageBright.sprite = retrievedImg.sprite;
@@ -58,7 +58,7 @@ namespace DisfigureTestMod.UImanipulation
                 imageDark.rectTransform.pivot = retrievedImg.rectTransform.pivot;
 
             }
-            baseWeaponObject.name = newName + "(clone of " + baseWeapon.name + ")";
+            baseWeaponObject.name = stats.WeaponName + "(clone of " + baseWeapon.name + ")";
             return baseWeaponObject;
         }
 

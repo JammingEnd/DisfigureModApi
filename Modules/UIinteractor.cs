@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using HarmonyLib;
 using UnityEngine.UI;
-using DisfigureTestMod.Util;
-using DisfigureTestMod.Weapons;
+using DisfigurwModApi.Util;
+using DisfigurwModApi.Weapons;
 
-namespace DisfigureTestMod.UImanipulation
+namespace DisfigurwModApi.UImanipulation
 {
     public class UIinteractor
     {
@@ -51,7 +51,6 @@ namespace DisfigureTestMod.UImanipulation
 
                     foreach (var weapon in NewWeaponInitiator.newWeapons)
                     {
-                        ModApi.Log.LogMessage("Checking weapon: " + weapon.Key.weaponName);
                         if (weapon.Key.IsGenereated == false)
                         {
                             ModApi.Log.LogMessage("Adding weapon: " + weapon.Key.weaponName);
@@ -79,12 +78,52 @@ namespace DisfigureTestMod.UImanipulation
 
             public static void Postfix(displayimagehandler __instance, ref string weaponname)
             {
-               foreach (var weapon in NewWeaponInitiator.newWeapons)
+                ModApi.Log.LogMessage("Weapon selected: " + weaponname);
+                foreach (var weapon in NewWeaponInitiator.newWeapons)
                 {
-                    if(weaponname == weapon.Key.weaponReference)
+                    if (weaponname == weapon.Key.weaponReference)
                     {
                         weapon.Key.BuildWeapon(__instance, weaponname);
                     }
+                }
+
+
+
+                HashSet<GameObject> seen = new HashSet<GameObject>();
+                List<GameObject> toDestroy = new List<GameObject>();
+
+                for (int i = 0; i < __instance.gameObject.transform.childCount; i++)
+                {
+                    seen.Add(__instance.transform.GetChild(i).gameObject);
+                }
+
+                foreach (var obj in seen)
+                {
+                    if (obj == null) continue; // Skip null GameObjects
+
+                    // Check if the object matches the string condition
+                    if (obj.name.Contains(weaponname) || !seen.Add(obj))
+                    {
+                        // Either it's a duplicate or doesn't match the string condition
+                        toDestroy.Add(obj);
+                    }
+                }
+
+                string refname = weaponname;
+                // Destroy all unwanted objects
+                foreach (var obj in toDestroy)
+                {
+                    if(obj.gameObject.name.Contains(weaponname))
+                    {
+                       if(toDestroy.Where(x => x.name.Contains(refname)).Count() == 1)
+                       {
+                            continue;
+                       }   
+                    }
+
+                    ModApi.Log.LogMessage("Destroying: " + obj.name);
+                    seen.Remove(obj); // Remove from the list
+                    GameObject.Destroy(obj); // Destroy the GameObject
                 }
             }
         }
