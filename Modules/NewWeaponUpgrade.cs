@@ -1,6 +1,6 @@
 ﻿using DisfigureModApi.UpgradeCreationTools;
-using DisfigurwModApi;
-using DisfigurwModApi.WeaponCreationTools;
+using DisfigureModApi;
+using DisfigureModApi.WeaponCreationTools;
 using UnityEngine;
 
 namespace DisfigureModApi.Modules

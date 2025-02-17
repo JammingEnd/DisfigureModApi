@@ -1,5 +1,5 @@
-﻿using DisfigurwModApi.UImanipulation;
-using DisfigurwModApi.WeaponCreationTools;
+﻿using DisfigureModApi.UImanipulation;
+using DisfigureModApi.WeaponCreationTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace DisfigurwModApi.Util
+namespace DisfigureModApi.Util
 {
     public static class Extentions
     {

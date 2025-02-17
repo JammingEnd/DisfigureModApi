@@ -1,4 +1,4 @@
-﻿using DisfigurwModApi.WeaponCreationTools;
+﻿using DisfigureModApi.WeaponCreationTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;

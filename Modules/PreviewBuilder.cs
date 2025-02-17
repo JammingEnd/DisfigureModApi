@@ -1,5 +1,5 @@
-﻿using DisfigurwModApi.Util;
-using DisfigurwModApi.WeaponCreationTools;
+﻿using DisfigureModApi.Util;
+using DisfigureModApi.WeaponCreationTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DisfigurwModApi.UImanipulation
+namespace DisfigureModApi.UImanipulation
 {
     public static class PreviewBuilder
     {

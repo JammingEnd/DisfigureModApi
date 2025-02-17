@@ -1,13 +1,13 @@
 ﻿using DisfigureModApi.Modules;
 using DisfigureModApi.UpgradeCreationTools;
-using DisfigurwModApi.Util;
-using DisfigurwModApi.WeaponCreationTools;
+using DisfigureModApi.Util;
+using DisfigureModApi.WeaponCreationTools;
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DisfigurwModApi
+namespace DisfigureModApi
 {
     public class Patcher
     {

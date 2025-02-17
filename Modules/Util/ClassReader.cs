@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DisfigurwModApi.Util
+namespace DisfigureModApi.Util
 {
     public class ClassReader
     {

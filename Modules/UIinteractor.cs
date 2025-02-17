@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using HarmonyLib;
 using UnityEngine.UI;
-using DisfigurwModApi.Util;
-using DisfigurwModApi.WeaponCreationTools;
+using DisfigureModApi.Util;
+using DisfigureModApi.WeaponCreationTools;
 
-namespace DisfigurwModApi.UImanipulation
+namespace DisfigureModApi.UImanipulation
 {
     public class UIinteractor
     {

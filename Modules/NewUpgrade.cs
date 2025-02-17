@@ -1,5 +1,5 @@
 ﻿using DisfigureModApi.Modules;
-using DisfigurwModApi;
+using DisfigureModApi;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
