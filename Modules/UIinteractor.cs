@@ -2,7 +2,7 @@
 using HarmonyLib;
 using UnityEngine.UI;
 using DisfigurwModApi.Util;
-using DisfigurwModApi.Weapons;
+using DisfigurwModApi.WeaponCreationTools;
 
 namespace DisfigurwModApi.UImanipulation
 {
@@ -32,39 +32,91 @@ namespace DisfigurwModApi.UImanipulation
             public static void Posfix(weaponselect __instance)
             {
                 currentButtonName = __instance.gameObject.name;
-                if (__instance.gameObject.name == "GunButton (31)")
+            }
+        }
+
+        [HarmonyPatch(typeof(weaponselect), "Start")]
+        public class UIinteractorOnEnable
+        {
+            public static void Postfix(weaponselect __instance)
+            {
+                if (!__instance.gameObject.IsAvaibleButton())
                 {
-                    ModApi.Log.LogMessage("Magic Wand hovered");
+                    return;
                 }
             }
         }
 
-        [HarmonyPatch(typeof(Text), "OnEnable")]
+        [HarmonyPatch(typeof(StartMenu), "OnEnable")]
         public class UIinteractorStart
         {
-            public static void Postfix(Text __instance)
+            public static void Postfix(StartMenu __instance)
             {
-                // Check if the button is the "COMING SOON" button, indicating an unused button
-                if (__instance.text == "COMING SOON")
+                // Iterate through all the childs of the start menu
+                for (int i = 0; i < __instance.gameObject.transform.childCount; i++)
                 {
-                    ModApi.Log.LogMessage("Found unused button" + "Registered weapons total: " + NewlyAddedWeaponsList.Count);
-
-                    foreach (var weapon in NewWeaponInitiator.newWeapons)
+                    if (NewWeaponInitiator.newWeapons.ToList()[NewWeaponInitiator.newWeapons.Count - 1].Key.IsGenereated)
                     {
-                        if (weapon.Key.IsGenereated == false)
+                        return;
+                    }
+                    // Get the current child for use in the loop
+                    Transform currentChild = __instance.gameObject.transform.GetChild(i);
+                    if (!currentChild.gameObject.IsAvaibleButton())
+                    {
+                        // If the current child is not a button, skip it
+                        continue;
+                    }
+                    Text textComp;
+                    if (currentChild.transform.GetChild(0).TryGetComponent(out Text result))
+                    {
+                        // If the current child has a text component, assign it to the textComp variable
+                        if(result.gameObject.activeSelf == false)
                         {
-                            ModApi.Log.LogMessage("Adding weapon: " + weapon.Key.weaponName);
-                            __instance.text = weapon.Key.weaponName;
-                            weapon.Key.IsGenereated = true;
+                            continue;
+                        }
+                        textComp = result;
+                        textComp.text = "COMING SOON";
+                    }
+                    else
+                    {
+                        continue;
+                    }
 
-                            weaponselect wpS = __instance.transform.parent.GetComponent<weaponselect>();
-                            wpS.weaponname = weapon.Key.weaponReference;
-                            wpS.enabled = true;
-                            __instance.transform.parent.GetComponent<Button>().enabled = true;
+                    // If the text of the button is a "COMING SOON" button
+                    if (textComp.text == "COMING SOON")
+                    {
+                       
 
-                            break;
+                        foreach (var weapon in NewWeaponInitiator.newWeapons)
+                        {
+                            if (weapon.Key.IsGenereated == false)
+                            {
+                                ModApi.Log.LogMessage("Generating Weapon: " + weapon.Key.weaponName);
+                                textComp.text = weapon.Key.weaponName;
+                                weapon.Key.IsGenereated = true;
+
+                                weaponselect wpS = textComp.transform.parent.GetComponent<weaponselect>();
+                                wpS.weaponname = weapon.Key.weaponReference;
+                                wpS.enabled = true;
+                                textComp.transform.parent.GetComponent<Button>().enabled = true;
+
+                                break;
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(StartMenu), "OnDisable")]
+        public class UIinteractorStartDisable
+        {
+            public static void Postfix(StartMenu __instance)
+            {
+                // Reset the generated weapons to false, otherwise the weapons will not be generated
+                foreach (var weapon in NewWeaponInitiator.newWeapons)
+                {
+                    weapon.Key.IsGenereated = false;
                 }
             }
         }
@@ -78,7 +130,6 @@ namespace DisfigurwModApi.UImanipulation
 
             public static void Postfix(displayimagehandler __instance, ref string weaponname)
             {
-                ModApi.Log.LogMessage("Weapon selected: " + weaponname);
                 foreach (var weapon in NewWeaponInitiator.newWeapons)
                 {
                     if (weaponname == weapon.Key.weaponReference)
@@ -86,8 +137,6 @@ namespace DisfigurwModApi.UImanipulation
                         weapon.Key.BuildWeapon(__instance, weaponname);
                     }
                 }
-
-
 
                 HashSet<GameObject> seen = new HashSet<GameObject>();
                 List<GameObject> toDestroy = new List<GameObject>();
@@ -113,15 +162,14 @@ namespace DisfigurwModApi.UImanipulation
                 // Destroy all unwanted objects
                 foreach (var obj in toDestroy)
                 {
-                    if(obj.gameObject.name.Contains(weaponname))
+                    if (obj.gameObject.name.Contains(weaponname))
                     {
-                       if(toDestroy.Where(x => x.name.Contains(refname)).Count() == 1)
-                       {
+                        if (toDestroy.Where(x => x.name.Contains(refname)).Count() == 1)
+                        {
                             continue;
-                       }   
+                        }
                     }
 
-                    ModApi.Log.LogMessage("Destroying: " + obj.name);
                     seen.Remove(obj); // Remove from the list
                     GameObject.Destroy(obj); // Destroy the GameObject
                 }

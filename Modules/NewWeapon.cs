@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace DisfigurwModApi.Weapons
+namespace DisfigurwModApi.WeaponCreationTools
 {
     /// <summary>
     /// Base weapon class
@@ -27,7 +27,13 @@ namespace DisfigurwModApi.Weapons
         /// this boolean is used for checking if the weapon assigned to a button
         /// </summary>
         public bool IsGenereated = false;
-        public virtual void BuildWeapon(displayimagehandler instance, string weaponname)
+
+        /// <summary>
+        /// What will the weapon, the player is holding, look like
+        /// </summary>
+        public WeaponId HeldWeapon;
+        public GameObject weaponPrefab;
+        public virtual void BuildWeapon(displayimagehandler instance, string name)
         {
 
         }
@@ -47,6 +53,27 @@ namespace DisfigurwModApi.Weapons
                 }
             }
             return canperform;
+        }
+
+        /// <summary>
+        /// Return the active weapon. !!! only use this in methods that operate when youre in the main game, outside it, it will return null
+        /// </summary>
+        /// <returns> The active weapon </returns>
+        public static NewWeapon GetActiveWeapon()
+        {
+            foreach (var weapon in NewWeaponInitiator.newWeapons)
+            {
+                if (weapon.Value)
+                {
+                    return weapon.Key;
+                }
+            }
+            return null;
+        }
+
+        public static GameObject SetHeldWeapon(ObjectPool pool, WeaponId id)
+        {
+            return pool.weaponsModelList[(int)id];
         }
     }
 
@@ -76,5 +103,7 @@ namespace DisfigurwModApi.Weapons
         {
             newWeapons.Add(weapon, false);
         }
+
+        public static WeaponId CurrentWeapon { get; set;}
     }
 }

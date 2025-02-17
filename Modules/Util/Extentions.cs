@@ -1,5 +1,5 @@
 ﻿using DisfigurwModApi.UImanipulation;
-using DisfigurwModApi.Weapons;
+using DisfigurwModApi.WeaponCreationTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,11 +51,79 @@ namespace DisfigurwModApi.Util
              isMelee);
             if (instance.gameObject.transform.childCount > 1)
             {
+                ModApi.Log.Equals("Destroying child");
                 GameObject.Destroy(instance.gameObject.transform.GetChild(0).gameObject);
             }
             return displayedObj;
         }
 
+        public static Transform GetChildTransformByName(this Transform transform, string name)
+        {
+            foreach (Transform child in transform)
+            {
+                if (child.name == name)
+                {
+                    return child;
+                }
+            }
+            return null;
+        }
 
+        public static int FromPreviewIdToModelId(this WeaponId id)
+        {
+            switch (id)
+            {
+                case WeaponId.Pistol:
+                    return 10; // Original id is 0 but the pistol DOESNT FKIN WORK
+                case WeaponId.Shotgun:
+                    return 1;
+                case WeaponId.Sniper:
+                    return 2;                 
+                case WeaponId.Knife:
+                    return 3;
+                case WeaponId.DoubleKatana:
+                    return 4;
+                case WeaponId.GreatSword:
+                    return 5;
+                case WeaponId.Scythe:
+                    return 6;
+                case WeaponId.LeverAction:
+                    return 7;
+                case WeaponId.Famas:
+                    return 8;
+                case WeaponId.Minigun:
+                    return 9;
+                case WeaponId.Revolver:
+                    return 10;
+                case WeaponId.Saw:
+                    return 11;
+                case WeaponId.Railgun:
+                    return 12;
+                case WeaponId.AkimboSmg:
+                    return 13;
+                case WeaponId.Halberd:
+                    return 14;
+                case WeaponId.PulseRifle:
+                    return 15;
+                default:
+                    return 0;
+            }
+        }
+
+
+        public static bool IsAvaibleButton(this GameObject obj)
+        {
+            string name = obj.name;
+            if(name.Contains("27"))
+                return true;
+            if (name.Contains("28"))
+                return true;
+            if (name.Contains("31"))
+                return true;
+            if (name.Contains("32"))
+                return true;
+
+            return false;
+        }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using DisfigureModApi.Modules;
+using DisfigureModApi.UpgradeCreationTools;
 using DisfigurwModApi.UImanipulation;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
@@ -19,8 +21,9 @@ namespace DisfigurwModApi
             Log.LogMessage("ModApi loading.....");
 
             Patcher.Ini();
+            UpgradeRegistry.Ini();
             UIinteractor.IniUIInteractor();
-            //ClassInjector.RegisterTypeInIl2Cpp<UIChanger>();
+            ClassInjector.RegisterTypeInIl2Cpp<ModdedPlayerStats>();
         }
     }
 }

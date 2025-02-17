@@ -1,5 +1,5 @@
 ﻿using DisfigurwModApi.Util;
-using DisfigurwModApi.Weapons;
+using DisfigurwModApi.WeaponCreationTools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +56,11 @@ namespace DisfigurwModApi.UImanipulation
                 imageDark.sprite = retrievedImg.sprite;
                 imageDark.rectTransform.sizeDelta = retrievedImg.rectTransform.sizeDelta;
                 imageDark.rectTransform.pivot = retrievedImg.rectTransform.pivot;
-
+                
+            }
+            else
+            {
+                ModApi.Log.LogMessage("is melee");
             }
             baseWeaponObject.name = stats.WeaponName + "(clone of " + baseWeapon.name + ")";
             return baseWeaponObject;
