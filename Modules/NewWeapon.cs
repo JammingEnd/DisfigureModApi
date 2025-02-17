@@ -1,10 +1,12 @@
-﻿using System;
+﻿using DisfigureModApi.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
-namespace DisfigureTestMod.Weapons
+namespace DisfigureModApi.WeaponCreationTools
 {
     /// <summary>
     /// Base weapon class
@@ -25,10 +27,65 @@ namespace DisfigureTestMod.Weapons
         /// this boolean is used for checking if the weapon assigned to a button
         /// </summary>
         public bool IsGenereated = false;
-        public virtual void BuildWeapon(displayimagehandler instance, string weaponname)
+
+        /// <summary>
+        /// What will the weapon, the player is holding, look like
+        /// </summary>
+        public WeaponId HeldWeapon;
+        public GameObject weaponPrefab;
+        public virtual void BuildWeapon(displayimagehandler instance, string name)
         {
 
         }
+
+       
+    }
+    public class WeaponUtils
+    {
+        public static bool isActiveWeapon(string weaponRef)
+        {
+            bool canperform = false;
+            foreach (var weapon in NewWeaponInitiator.newWeapons)
+            {
+                if (weapon.Value && weapon.Key.weaponReference == weaponRef)
+                {
+                    canperform = true;
+                }
+            }
+            return canperform;
+        }
+
+        /// <summary>
+        /// Return the active weapon. !!! only use this in methods that operate when youre in the main game, outside it, it will return null
+        /// </summary>
+        /// <returns> The active weapon </returns>
+        public static NewWeapon GetActiveWeapon()
+        {
+            foreach (var weapon in NewWeaponInitiator.newWeapons)
+            {
+                if (weapon.Value)
+                {
+                    return weapon.Key;
+                }
+            }
+            return null;
+        }
+
+        public static GameObject SetHeldWeapon(ObjectPool pool, WeaponId id)
+        {
+            return pool.weaponsModelList[(int)id];
+        }
+    }
+
+    public class WeaponPreviewStats
+    {
+        public string WeaponName;
+        public string WeaponDescription;
+        public float WeaponDamage;
+        public float WeaponFireRate;
+        public float BulletSpeed;
+        public float BulletSize;
+
     }
 
     public class  NewWeaponInitiator
@@ -46,5 +103,7 @@ namespace DisfigureTestMod.Weapons
         {
             newWeapons.Add(weapon, false);
         }
+
+        public static WeaponId CurrentWeapon { get; set;}
     }
 }

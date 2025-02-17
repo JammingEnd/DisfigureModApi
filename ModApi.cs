@@ -1,12 +1,14 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using DisfigureTestMod.UImanipulation;
+using DisfigureModApi.Modules;
+using DisfigureModApi.UpgradeCreationTools;
+using DisfigureModApi.UImanipulation;
 using HarmonyLib;
 using Il2CppInterop.Runtime.Injection;
 using UnityEngine;
 
-namespace DisfigureTestMod
+namespace DisfigureModApi
 {
     [BepInPlugin("com.disfigure.modapi", "DisfigureModApi", "1.0.0")]
     public class ModApi : BasePlugin
@@ -19,8 +21,9 @@ namespace DisfigureTestMod
             Log.LogMessage("ModApi loading.....");
 
             Patcher.Ini();
+            UpgradeRegistry.Ini();
             UIinteractor.IniUIInteractor();
-            //ClassInjector.RegisterTypeInIl2Cpp<UIChanger>();
+            ClassInjector.RegisterTypeInIl2Cpp<ModdedPlayerStats>();
         }
     }
 }

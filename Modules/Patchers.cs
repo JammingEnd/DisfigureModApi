@@ -1,15 +1,13 @@
-﻿
-using DisfigureTestMod.Util;
-using DisfigureTestMod.Weapons;
+﻿using DisfigureModApi.Modules;
+using DisfigureModApi.UpgradeCreationTools;
+using DisfigureModApi.Util;
+using DisfigureModApi.WeaponCreationTools;
 using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-namespace DisfigureTestMod
+namespace DisfigureModApi
 {
     public class Patcher
     {
@@ -49,7 +47,7 @@ namespace DisfigureTestMod
                 NewWeaponInitiator.newWeapons[item.Key] = false;
             }
 
-            // Set the selected weapon to true 
+            // Set the selected weapon to true
             // for all (currently) buttons
             if (__instance.gameObject.name == "GunButton (27)")
             {
@@ -58,6 +56,7 @@ namespace DisfigureTestMod
                     if (item.Key.weaponReference == __instance.weaponname)
                     {
                         NewWeaponInitiator.newWeapons[item.Key] = true;
+                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
                     }
                 }
             }
@@ -68,6 +67,7 @@ namespace DisfigureTestMod
                     if (item.Key.weaponReference == __instance.weaponname)
                     {
                         NewWeaponInitiator.newWeapons[item.Key] = true;
+                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
                     }
                 }
             }
@@ -79,6 +79,7 @@ namespace DisfigureTestMod
                     if (item.Key.weaponReference == __instance.weaponname)
                     {
                         NewWeaponInitiator.newWeapons[item.Key] = true;
+                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
                     }
                 }
             }
@@ -89,6 +90,7 @@ namespace DisfigureTestMod
                     if (item.Key.weaponReference == __instance.weaponname)
                     {
                         NewWeaponInitiator.newWeapons[item.Key] = true;
+                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
                     }
                 }
             }
@@ -110,25 +112,64 @@ namespace DisfigureTestMod
         /// <summary>
         /// Activates when you load into the Map, used for setting up weapons and player stats
         /// </summary>
-        public static event Action<PlayerStats, WeaponManager> OnGameStart;
+        public static event Action<PlayerStats, WeaponManager> OnGameStartForWeapons;
+
+        public static event Action<PlayerStats, WeaponManager> OnGameStartForUpgrades;
+
         public static void Postfix(ObjectPool __instance)
         {
             PlayerStats player = __instance.pS;
             WeaponManager weaponManager = __instance.wM;
+            OnGameStartForUpgrades?.Invoke(player, weaponManager);
+
+            if (WeaponUtils.GetActiveWeapon() == null)
+            {
+                return;
+            }
+
+            SetupReferences(__instance, player, weaponManager);
+
             if (player != null)
             {
-                ModApi.Log.LogMessage("PlayerStats found");
-                player.circleVisionLength *= 3;
-
-                OnGameStart?.Invoke(player, weaponManager);
-                
-
-                ModApi.Log.LogMessage(weaponManager);
+                OnGameStartForWeapons?.Invoke(player, weaponManager);
             }
-            else
+        }
+
+        private static void SetupReferences(ObjectPool pool, PlayerStats stats, WeaponManager wM)
+        {
+            GameObject instanceHeldWeapon = WeaponUtils.GetActiveWeapon().weaponPrefab;
+            instanceHeldWeapon.transform.position = stats.gameObject.transform.position;
+            instanceHeldWeapon.transform.rotation = stats.gameObject.transform.rotation;
+            instanceHeldWeapon.transform.SetParent(wM.weaponModels.transform);
+
+            stats.windUpActivateParticle = instanceHeldWeapon.transform.GetChild(1).GetChild(0).gameObject;
+            stats.windUpActivateParticle.SetActive(false);
+
+            stats.windUpReadyFlashParticle = instanceHeldWeapon.transform.GetChild(1).GetChild(1).gameObject;
+            stats.windUpReadyFlashParticle.SetActive(false);
+
+            //GameObject.Instantiate(WeaponUtils.SetHeldWeapon(pool, NewWeaponInitiator.CurrentWeapon), wM.weaponModels.transform.GetChild(0));
+
+            instanceHeldWeapon.SetActive(true);
+        }
+    }
+
+    [HarmonyPatch(typeof(ObjectPool), "Awake")]
+    public class ObjectPoolPatchAwake
+    {
+        public static void Postfix(ObjectPool __instance)
+        {
+            __instance.pS.gameObject.AddComponent<ModdedPlayerStats>();
+
+            if (WeaponUtils.GetActiveWeapon() == null)
             {
-                ModApi.Log.LogMessage("PlayerStats not found");
+                return;
             }
+
+            NewWeapon activeWeapon = WeaponUtils.GetActiveWeapon();
+            WeaponId id = activeWeapon.HeldWeapon;
+            ModApi.Log.LogMessage($"Active weapon: {id}");
+            WeaponUtils.GetActiveWeapon().weaponPrefab = GameObject.Instantiate(__instance.weaponsModelList[id.FromPreviewIdToModelId()], Vector3.zero, Quaternion.Euler(Vector3.zero));
         }
     }
 
@@ -142,8 +183,113 @@ namespace DisfigureTestMod
                 $" || " +
                 $"{__instance.statName2} by {__instance.change2}" +
                 $" || " +
-                $"{__instance.statName3} by {__instance.change3}"
+                $"{__instance.statName3} by {__instance.change3}" +
+                " || " +
+                $"{__instance.statName4} by {__instance.change4}" +
+                $" || " +
+                $"{__instance.statName5} by {__instance.change5}"
                 );
+
+            __instance.SetCustomStats();
+        }
+    }
+
+    [HarmonyPatch(typeof(upgradepath), "OnPointerEnter")]
+    public class UpgradePathPatchOnPointerEnter
+    {
+        public static void Postfix(upgradepath __instance, ref PointerEventData eventData)
+        {
+            if (__instance.pS.IsUpgradePresent(__instance.upgradeName))
+            {
+                __instance.ScaleUpOverTime(0.5f);
+
+                GameObject textObject = __instance.gameObject.transform.parent.parent.parent.GetChild(2).gameObject;
+                ModApi.Log.LogMessage("Text object: " + textObject.name);
+                Text description = textObject.transform.GetChild(0).GetComponent<Text>();
+
+                description.text = __instance.statdescription + "\n" + "\n";
+
+                foreach (var item in __instance.desclines)
+                {
+                    description.text += item + "\n";
+                }
+
+                Text title = description.transform.GetChild(0).GetComponent<Text>();
+                title.text = __instance.upgradeName;
+
+                ModApi.Log.LogMessage("Showing upgrade");
+                return;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(upgradepath), "OnPointerExit")]
+    public class UpgradePathPatchOnPointerExit
+    {
+        public static void Postfix(upgradepath __instance, ref PointerEventData eventData)
+        {
+            if (__instance.pS.IsUpgradePresent(__instance.upgradeName))
+            {
+                GameObject textObject = __instance.gameObject.transform.parent.parent.parent.GetChild(2).gameObject;
+                Text description = textObject.transform.GetChild(0).GetComponent<Text>();
+
+                description.text = __instance.pS.selectedUpgrade.statdescription + "\n" + "\n";
+                foreach (var item in __instance.pS.selectedUpgrade.desclines)
+                {
+                    description.text += item + "\n";
+                }
+
+                Text title = description.transform.GetChild(0).GetComponent<Text>();
+                title.text = __instance.pS.selectedUpgrade.getName();
+                return;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(weaponupgradescreen), "Awake")] 
+    public class WeaponUpgradeScreenAwake
+    {
+        public static void Postfix(weaponupgradescreen __instance)
+        {
+            __instance.AddNewWeaponUpgradeTreesToPlayer(true);
+        }
+    }
+
+    [HarmonyPatch(typeof(weaponupgradescreen), "OnEnable")]
+    public class WeaponUpgradeScreenOnUpgrade
+    {
+        public static void Postfix(weaponupgradescreen __instance)
+        {
+            ModApi.Log.LogMessage(WeaponUtils.GetActiveWeapon().weaponName);
+            GameObject currentUpgrades = __instance.weaponUpgradesList[__instance.weaponUpgradesList.Count - 1];
+            if (WeaponUtils.GetActiveWeapon() != null)
+            {
+           
+
+                __instance.temp = currentUpgrades;
+                for (int i = 0; i < 8; i++)
+                {
+                    GameObject singleUpgrade = GameObject.Instantiate(currentUpgrades.transform.GetChild(i).gameObject);
+                    ModApi.Log.LogMessage("Spawning upgrade: " + singleUpgrade.name);
+                    //singleUpgrade.transform.localPosition = __instance.transformPositions[i].position;
+                    //singleUpgrade.transform.parent = __instance.transformPositions[i];
+                    __instance.chosenList.Add(singleUpgrade);
+
+                }
+            }
+        }
+
+        private static void Try1(weaponupgradescreen __instance)
+        {
+            GameObject upgrades = __instance.weaponUpgradesList[__instance.weaponUpgradesList.Count - 1];
+            __instance.temp = upgrades;
+            for (int i = 0; i < 8; i++)
+            {
+                GameObject singleUpgrade = upgrades.transform.GetChild(i).gameObject;
+                singleUpgrade.transform.localPosition = __instance.transformPositions[i].position;
+                singleUpgrade.transform.parent = __instance.transformPositions[i];
+                __instance.chosenList.Add(singleUpgrade);
+            }
         }
     }
 }
