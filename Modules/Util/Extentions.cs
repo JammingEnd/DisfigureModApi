@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DisfigureModApi.Util
 {
@@ -38,15 +39,16 @@ namespace DisfigureModApi.Util
         {
             GameObject displayedObj = GameObject.Instantiate(instance.weaponDisplays[0], instance.gameObject.transform);
             displayedObj.transform.position = new Vector3(25.66f, -65, -15.5645f);
-            displayedObj.BuildPreview(new WeaponPreviewStats() {
+            displayedObj.BuildPreview(new WeaponPreviewStats()
+            {
                 WeaponName = name,
                 WeaponDescription = desc,
                 WeaponDamage = damage,
                 WeaponFireRate = fireRate,
                 BulletSpeed = bulletSpeed,
                 BulletSize = BulletSize
-            }, 
-             previewSprite, 
+            },
+             previewSprite,
              instance.weaponDisplays.ToList(),
              isMelee);
             if (instance.gameObject.transform.childCount > 1)
@@ -77,53 +79,101 @@ namespace DisfigureModApi.Util
                     return 10; // Original id is 0 but the pistol DOESNT FKIN WORK
                 case WeaponId.Shotgun:
                     return 1;
+
                 case WeaponId.Sniper:
-                    return 2;                 
+                    return 2;
+
                 case WeaponId.Knife:
                     return 3;
+
                 case WeaponId.DoubleKatana:
                     return 4;
+
                 case WeaponId.GreatSword:
                     return 5;
+
                 case WeaponId.Scythe:
                     return 6;
+
                 case WeaponId.LeverAction:
                     return 7;
+
                 case WeaponId.Famas:
                     return 8;
+
                 case WeaponId.Minigun:
                     return 9;
+
                 case WeaponId.Revolver:
                     return 10;
+
                 case WeaponId.Saw:
                     return 11;
+
                 case WeaponId.Railgun:
                     return 12;
+
                 case WeaponId.AkimboSmg:
                     return 13;
+
                 case WeaponId.Halberd:
                     return 14;
+
                 case WeaponId.PulseRifle:
                     return 15;
+
                 default:
                     return 0;
             }
         }
 
-
         public static bool IsAvaibleButton(this GameObject obj)
         {
             string name = obj.name;
-            if(name.Contains("27"))
-                return true;
-            if (name.Contains("28"))
-                return true;
-            if (name.Contains("31"))
+            if (name.Contains("40"))
                 return true;
             if (name.Contains("32"))
+                return true;
+            if (name.Contains("28"))
                 return true;
 
             return false;
         }
+
+        public static Sprite GetBaseGameSprite(this PlayerStats obj, SpriteNames name)
+        {
+            return obj.upgrades.ToList().Where(x => x.name.ToUpper().Contains(name.ToString())).First().GetComponent<Image>().activeSprite;
+        }
+    }
+
+    public enum SpriteNames
+    {
+        SWIFTNESS,
+        GLEAM,
+        SPOTLIGHT,
+        BLEED,
+        BURN,
+        RADIATION,
+        QUICKDRAW,
+        BULKROUNDS, 
+        ELECTRICITY,
+        SHIELDBARRIER,
+        SHRAPNEL,
+        PLASMACHARGE,
+        FLASHBANGS,
+        SINGULARITY,
+        CONCEALEDFATIGUE,
+        GUIDEDMISSILE,
+        SLOWEDPROJECTILES,
+        WILDFIRE,
+        CLONEDSENTRY,
+        CHARGEDROUNDS,
+        GUIDEDLASER,
+        PSYCHTRAIL,
+        LIGHTMETEOR,
+        PROXIMITYMARKER,
+        WINDUPSTRIKE,
+        CALLISTOCURRENT,
+        STABSNARES,
     }
 }

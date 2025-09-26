@@ -29,7 +29,7 @@ namespace DisfigureModApi.UImanipulation
         [HarmonyPatch(typeof(weaponselect), "OnPointerEnter")]
         public class UIinteractorOnPointerEnter
         {
-            public static void Posfix(weaponselect __instance)
+            public static void Postfix(weaponselect __instance)
             {
                 currentButtonName = __instance.gameObject.name;
             }
@@ -91,7 +91,7 @@ namespace DisfigureModApi.UImanipulation
                         {
                             if (weapon.Key.IsGenereated == false)
                             {
-                                ModApi.Log.LogMessage("Generating Weapon: " + weapon.Key.weaponName);
+                                ModApi.Log.LogMessage("Generating Weapon: " + weapon.Key.weaponName + ". On Button: " + currentChild.name);
                                 textComp.text = weapon.Key.weaponName;
                                 weapon.Key.IsGenereated = true;
 
@@ -121,6 +121,9 @@ namespace DisfigureModApi.UImanipulation
             }
         }
 
+        /// <summary>
+        /// this is the one who changes the gun in the button
+        /// </summary>
         [HarmonyPatch(typeof(displayimagehandler), "showChosenWeapon")]
         public class UIinteractorWeaponDisplayShow
         {

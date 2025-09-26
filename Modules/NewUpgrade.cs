@@ -52,9 +52,10 @@ namespace DisfigureModApi.UpgradeCreationTools
 
     public static class UpgradeUtils
     {
-        public static void AssignInitialUpgrade(this PlayerStats playerStats, GameObject upgrade, List<GameObject> otherUpgrades)
+        public static void AssignInitialUpgrade(this PlayerStats playerStats, GameObject upgrade, List<GameObject> otherUpgrades, Color setColour)
         {
             Upgrade neWupgrade = upgrade.GetComponent<Upgrade>();
+            neWupgrade.defaultColor = setColour;
             GameObject newUpgradePathPanel = GameObject.Instantiate(neWupgrade.upgradePathsPanel);
             upgradepathspanel newPathPanel = newUpgradePathPanel.GetComponent<upgradepathspanel>();
 
@@ -79,8 +80,17 @@ namespace DisfigureModApi.UpgradeCreationTools
             newUpgradePathPanel.gameObject.name = "P." + neWupgrade.upgradeName;
             neWupgrade.upgradePathsPanel = newUpgradePathPanel;
 
-            playerStats.unlockedUpgrades.Add(upgrade);
-            playerStats.upgrades.Add(upgrade);
+            upgrade.GetComponent<Image>().color = setColour;    
+
+            AssetCache assetCache = GameObject.FindObjectOfType<AssetCache>();
+            if (!assetCache.CachedUpgrades.ContainsKey(upgrade))
+            {
+                assetCache.InsetUpgrades(upgrade, otherUpgrades);
+            }
+
+            // instead cache it
+            //playerStats.unlockedUpgrades.Add(upgrade);
+            //playerStats.upgrades.Add(upgrade);
         }
 
         public static bool HasChosenStat(this Upgrade upgrade, string name)
@@ -172,10 +182,11 @@ namespace DisfigureModApi.UpgradeCreationTools
             return upgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, Sprite icon, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
+            
 
             Upgrade upgrade = newUpgrade.GetComponent<Upgrade>();
             upgrade.ClearStats();
@@ -218,7 +229,7 @@ namespace DisfigureModApi.UpgradeCreationTools
             return newUpgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, Sprite icon, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
@@ -271,7 +282,7 @@ namespace DisfigureModApi.UpgradeCreationTools
             return newUpgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, Sprite icon, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
@@ -329,7 +340,7 @@ namespace DisfigureModApi.UpgradeCreationTools
             return newUpgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, Sprite icon, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
@@ -393,7 +404,7 @@ namespace DisfigureModApi.UpgradeCreationTools
             return newUpgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, Sprite icon, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;

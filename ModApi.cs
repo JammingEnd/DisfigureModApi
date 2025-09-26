@@ -24,6 +24,7 @@ namespace DisfigureModApi
             UpgradeRegistry.Ini();
             UIinteractor.IniUIInteractor();
             ClassInjector.RegisterTypeInIl2Cpp<ModdedPlayerStats>();
+            ClassInjector.RegisterTypeInIl2Cpp<AssetCache>();
         }
     }
 }

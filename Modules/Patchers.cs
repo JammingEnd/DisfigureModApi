@@ -28,6 +28,7 @@ namespace DisfigureModApi
             __instance.selectedColor = Color.red;
             if (__instance.weaponIsUnlocked == false)
             {
+
             }
         }
     }
@@ -49,30 +50,7 @@ namespace DisfigureModApi
 
             // Set the selected weapon to true
             // for all (currently) buttons
-            if (__instance.gameObject.name == "GunButton (27)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
-            if (__instance.gameObject.name == "GunButton (28)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
-
-            if (__instance.gameObject.name == "GunButton (31)")
+            if (__instance.gameObject.name == "GunButton (40)")
             {
                 foreach (var item in NewWeaponInitiator.newWeapons)
                 {
@@ -94,8 +72,29 @@ namespace DisfigureModApi
                     }
                 }
             }
+
+            if (__instance.gameObject.name == "GunButton (28)")
+            {
+                foreach (var item in NewWeaponInitiator.newWeapons)
+                {
+                    if (item.Key.weaponReference == __instance.weaponname)
+                    {
+                        NewWeaponInitiator.newWeapons[item.Key] = true;
+                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
+                    }
+                }
+            }
         }
     }
+
+    [HarmonyPatch(typeof(alttabmanager), "Awake")]
+    public class AltTabManagerPatchAwake
+    {
+        public static void Postfix(alttabmanager __instance)
+        {
+            __instance.gameObject.AddComponent<AssetCache>();
+        }
+    }   
 
     [HarmonyPatch(typeof(StartMenu), "PlayGame")]
     public class StartMenuPatch
@@ -103,8 +102,34 @@ namespace DisfigureModApi
         public static void Prefix()
         {
             ModApi.Log.LogMessage("PlayGame called");
+
         }
     }
+
+    [HarmonyPatch(typeof(PlayerStats), "LevelUp")]
+    public class PlayerStatsPatchLevelUp
+    {
+        public static void Prefix(PlayerStats __instance)
+        {
+            LoadoutUpgrades(__instance);
+        }
+
+        private static void LoadoutUpgrades(PlayerStats stats)
+        {
+            AssetCache cache = GameObject.FindObjectOfType<AssetCache>();
+            if (!cache.UpgradesLoaded)
+            {
+                foreach (var upgrade in cache.CachedUpgrades)
+                {
+                    stats.unlockedUpgrades.Add(upgrade.Key);
+                    stats.upgrades.Add(upgrade.Key);
+
+                }
+            }
+
+            cache.UpgradesLoaded = true;
+        }
+    }   
 
     [HarmonyPatch(typeof(ObjectPool), "Start")]
     public class OnGameStartPatch
@@ -133,6 +158,8 @@ namespace DisfigureModApi
             {
                 OnGameStartForWeapons?.Invoke(player, weaponManager);
             }
+
+            
         }
 
         private static void SetupReferences(ObjectPool pool, PlayerStats stats, WeaponManager wM)
@@ -152,6 +179,8 @@ namespace DisfigureModApi
 
             instanceHeldWeapon.SetActive(true);
         }
+
+  
     }
 
     [HarmonyPatch(typeof(ObjectPool), "Awake")]
@@ -204,7 +233,7 @@ namespace DisfigureModApi
                 __instance.ScaleUpOverTime(0.5f);
 
                 GameObject textObject = __instance.gameObject.transform.parent.parent.parent.GetChild(2).gameObject;
-                ModApi.Log.LogMessage("Text object: " + textObject.name);
+                //ModApi.Log.LogMessage("Text object: " + textObject.name);
                 Text description = textObject.transform.GetChild(0).GetComponent<Text>();
 
                 description.text = __instance.statdescription + "\n" + "\n";
@@ -246,7 +275,7 @@ namespace DisfigureModApi
         }
     }
 
-    [HarmonyPatch(typeof(weaponupgradescreen), "Awake")] 
+    [HarmonyPatch(typeof(weaponupgradescreen), "Awake")]
     public class WeaponUpgradeScreenAwake
     {
         public static void Postfix(weaponupgradescreen __instance)
@@ -264,8 +293,6 @@ namespace DisfigureModApi
             GameObject currentUpgrades = __instance.weaponUpgradesList[__instance.weaponUpgradesList.Count - 1];
             if (WeaponUtils.GetActiveWeapon() != null)
             {
-           
-
                 __instance.temp = currentUpgrades;
                 for (int i = 0; i < 8; i++)
                 {
@@ -274,7 +301,6 @@ namespace DisfigureModApi
                     //singleUpgrade.transform.localPosition = __instance.transformPositions[i].position;
                     //singleUpgrade.transform.parent = __instance.transformPositions[i];
                     __instance.chosenList.Add(singleUpgrade);
-
                 }
             }
         }
