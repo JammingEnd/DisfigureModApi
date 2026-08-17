@@ -115,6 +115,12 @@ namespace DisfigureModApi.UImanipulation
             moreButtonClone.name = "MoreButton";
             moreButtonClone.transform.position = MoreButtonPosition;
 
+            Button cloneButton = moreButtonClone.GetComponent<Button>();
+            if (cloneButton != null)
+            {
+                cloneButton.onClick.RemoveAllListeners();
+            }
+
             SetMoreButtonLabel(moreButtonClone);
             ModApi.Log.LogMessage("MoreButton created at " + moreButtonClone.transform.position);
         }
