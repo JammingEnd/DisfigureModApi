@@ -55,19 +55,21 @@ namespace DisfigureModApi.Util
             return null;
         }
 
-        public static bool IsAvaibleButton(this GameObject obj)
+        /// <summary>
+        /// Returns the active child GameObjects of <paramref name="parent"/> whose name starts
+        /// with "GunButton" (e.g. "GunButton (27)"). Disabled/legacy buttons are excluded.
+        /// </summary>
+        public static List<GameObject> FindGunButtons(this Transform parent)
         {
-            string name = obj.name;
-            if(name.Contains("27"))
-                return true;
-            if (name.Contains("28"))
-                return true;
-            if (name.Contains("31"))
-                return true;
-            if (name.Contains("32"))
-                return true;
-
-            return false;
+            List<GameObject> buttons = new();
+            foreach (Transform child in parent)
+            {
+                if (child.gameObject.name.StartsWith("GunButton") && child.gameObject.activeInHierarchy)
+                {
+                    buttons.Add(child.gameObject);
+                }
+            }
+            return buttons;
         }
     }
 }
