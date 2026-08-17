@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\interop\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Core">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\core\BepInEx.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\interop\Il2Cppmscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\interop\Il2CppSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\unity-libs\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\unity-libs\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\unity-libs\UnityEngine.InputModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\interop\UnityEngine.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="DisfigureModApi">
+      <HintPath>..\bin\$(Configuration)\net6.0\DisfigureModApi.dll</HintPath>
+    </Reference>
+    <ProjectReference Include="..\DisfigureModApi.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <PropertyGroup>
+      <PluginsDir>..\..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\plugins\TestMod</PluginsDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(PluginsDir)" />
+    <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(PluginsDir)" />
+  </Target>
+
+</Project>
