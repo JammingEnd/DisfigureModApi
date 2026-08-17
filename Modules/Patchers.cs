@@ -91,6 +91,27 @@ namespace DisfigureModApi
         }
     }
 
+    /// <summary>
+    /// The "More >>" clone inherits the Back button's serialized <c>onClick</c>, which is
+    /// wired to <see cref="BackButton.clickFunctionality()"/>. That is the actual click
+    /// path (OnSelect is not invoked on click), so this prefix runs our clear action for
+    /// the clone and skips the vanilla navigation.
+    /// </summary>
+    [HarmonyPatch(typeof(BackButton), "clickFunctionality")]
+    public class MoreButtonClickFunctionalityPatch
+    {
+        public static bool Prefix(BackButton __instance)
+        {
+            if (__instance.gameObject.name != "MoreButton")
+            {
+                return true;
+            }
+
+            UIinteractor.ClearGunButtons();
+            return false; // skip the vanilla navigation
+        }
+    }
+
     [HarmonyPatch(typeof(ObjectPool), "Start")]
     public class OnGameStartPatch
     {
