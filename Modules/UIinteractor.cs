@@ -93,74 +93,69 @@ namespace DisfigureModApi.UImanipulation
         }
 
         /// <summary>
-        /// Creates the "More >>" clone of the back button under Canvas/Start on first use.
-        /// No-op if the clone already exists or no active back button is found.
+        /// Creates the "More >>" clone of the "Back" button under Canvas/Start on first use.
+        /// No-op if the clone already exists or no "Back" button is found in the panel.
         /// </summary>
-        public static void EnsureMoreButtonCreated()
+        public static void EnsureMoreButtonCreated(Transform panel)
         {
             if (moreButtonClone != null)
             {
                 return;
             }
 
-            BackButton source = null;
-            foreach (BackButton bb in UnityEngine.Object.FindObjectsOfType<BackButton>())
-            {
-                if (bb.gameObject.name == "back" && bb.gameObject.activeInHierarchy)
-                {
-                    source = bb;
-                    break;
-                }
-            }
+            Transform source = FindChildByName(panel, "Back");
             if (source == null)
             {
-                ModApi.Log.LogMessage("MoreButton: no active 'back' button found to clone.");
+                ModApi.Log.LogMessage("MoreButton: no 'Back' object found under panel '" + panel.name + "'.");
                 return;
             }
+            ModApi.Log.LogMessage("MoreButton: found 'Back' at '" + source.name + "'.");
 
-            moreButtonClone = GameObject.Instantiate(source.gameObject, source.transform.parent);
+            moreButtonClone = GameObject.Instantiate(source.gameObject, source.parent);
             moreButtonClone.name = "MoreButton";
             moreButtonClone.transform.position = MoreButtonPosition;
 
-            BackButton cloneBack = moreButtonClone.GetComponent<BackButton>();
-            if (cloneBack != null)
-            {
-                cloneBack.enabled = false;
-            }
-            ButtonControl cloneControl = moreButtonClone.GetComponent<ButtonControl>();
-            if (cloneControl != null)
-            {
-                cloneControl.enabled = false;
-            }
-
             SetMoreButtonLabel(moreButtonClone);
-
-            Button cloneButton = moreButtonClone.GetComponent<Button>();
-            if (cloneButton != null)
-            {
-                cloneButton.onClick.RemoveAllListeners();
-                cloneButton.onClick.AddListener(ClearGunButtons);
-            }
             ModApi.Log.LogMessage("MoreButton created at " + moreButtonClone.transform.position);
         }
 
         /// <summary>
-        /// Sets the back button's label child to "More >>".
+        /// Recursively searches <paramref name="root"/> for a child GameObject named
+        /// <paramref name="name"/>. Skips our own clone so a pending (end-of-frame)
+        /// destroy is not re-cloned.
+        /// </summary>
+        private static Transform FindChildByName(Transform root, string name)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.name == "MoreButton")
+                {
+                    continue;
+                }
+                if (child.name == name)
+                {
+                    return child;
+                }
+                Transform nested = FindChildByName(child, name);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Sets the clone's label Text to "More >>".
         /// </summary>
         private static void SetMoreButtonLabel(GameObject clone)
         {
-            Text label = null;
-            foreach (Text text in clone.GetComponentsInChildren<Text>(true))
-            {
-                if (!string.IsNullOrEmpty(text.text))
-                {
-                    label = text;
-                    break;
-                }
-            }
+            Text label = clone.GetComponentInChildren<Text>(true);
             if (label != null)
             {
                 label.text = "More >>";
+                ModApi.Log.LogMessage("MoreButton label set on '" + label.gameObject.name + "' to '" + label.text + "'.");
             }
             else
             {
@@ -260,7 +255,7 @@ namespace DisfigureModApi.UImanipulation
         {
             public static void Postfix(StartMenu __instance)
             {
-                UIinteractor.EnsureMoreButtonCreated();
+                UIinteractor.EnsureMoreButtonCreated(__instance.gameObject.transform);
                 UIinteractor.AssignWeaponsToFreeSlots(__instance.gameObject.transform);
             }
         }

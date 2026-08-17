@@ -1,4 +1,5 @@
 ﻿using DisfigureModApi.Modules;
+using DisfigureModApi.UImanipulation;
 using DisfigureModApi.UpgradeCreationTools;
 using DisfigureModApi.Util;
 using DisfigureModApi.WeaponCreationTools;
@@ -68,6 +69,25 @@ namespace DisfigureModApi
         public static void Prefix()
         {
             ModApi.Log.LogMessage("PlayGame called");
+        }
+    }
+
+    /// <summary>
+    /// Intercepts <see cref="ButtonControl.OnSelect"/> for the API's "More >>" clone so it
+    /// clears the weapon slots instead of running the vanilla back-button behaviour.
+    /// </summary>
+    [HarmonyPatch(typeof(ButtonControl), "OnSelect")]
+    public class MoreButtonOnSelectPatch
+    {
+        public static bool Prefix(ButtonControl __instance)
+        {
+            if (__instance.gameObject.name != "MoreButton")
+            {
+                return true;
+            }
+
+            UIinteractor.ClearGunButtons();
+            return false; // skip the vanilla OnSelect body
         }
     }
 

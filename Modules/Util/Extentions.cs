@@ -45,8 +45,9 @@ namespace DisfigureModApi.Util
 
         public static Transform GetChildTransformByName(this Transform transform, string name)
         {
-            foreach (Transform child in transform)
+            for (int i = 0; i < transform.childCount; i++)
             {
+                Transform child = transform.GetChild(i);
                 if (child.name == name)
                 {
                     return child;
@@ -62,8 +63,9 @@ namespace DisfigureModApi.Util
         public static List<GameObject> FindGunButtons(this Transform parent)
         {
             List<GameObject> buttons = new();
-            foreach (Transform child in parent)
+            for (int i = 0; i < parent.childCount; i++)
             {
+                Transform child = parent.GetChild(i);
                 if (child.gameObject.name.StartsWith("GunButton") && child.gameObject.activeInHierarchy)
                 {
                     buttons.Add(child.gameObject);
