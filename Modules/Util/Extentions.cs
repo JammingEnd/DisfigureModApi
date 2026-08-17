@@ -29,7 +29,7 @@ namespace DisfigureModApi.Util
         /// <returns>The built display GameObject (already parented to the displayimagehandler).</returns>
         public static GameObject SetWeaponPreviewStats(this displayimagehandler instance, WeaponPreviewStats stats, WeaponId previewSprite, bool isMelee = false)
         {
-            instance.DestroyModdedPreview();
+            instance.ClearDisplayChildren();
 
             GameObject displayedObj = GameObject.Instantiate(instance.weaponDisplays[0], instance.gameObject.transform);
             displayedObj.transform.position = new Vector3(25.66f, -65, -15.5645f);
@@ -41,8 +41,21 @@ namespace DisfigureModApi.Util
         }
 
         /// <summary>
+        /// Removes all children of the display handler before building a modded preview, so
+        /// a stale vanilla display (or a previous modded one) never overlaps with the new one.
+        /// </summary>
+        public static void ClearDisplayChildren(this displayimagehandler instance)
+        {
+            Transform root = instance.gameObject.transform;
+            for (int i = root.childCount - 1; i >= 0; i--)
+            {
+                GameObject.DestroyImmediate(root.GetChild(i).gameObject);
+            }
+        }
+
+        /// <summary>
         /// Destroys any modded preview display built by the API (clones named with
-        /// "(clone of ..."), so vanilla weapon displays are never affected.
+        /// "(clone of ..."), leaving vanilla display children untouched.
         /// </summary>
         public static void DestroyModdedPreview(this displayimagehandler instance)
         {
