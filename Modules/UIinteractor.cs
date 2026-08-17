@@ -261,8 +261,10 @@ namespace DisfigureModApi.UImanipulation
         {
             public static void Postfix(StartMenu __instance)
             {
+                // Only create the "More >>" clone here. Modded weapons are NOT auto-assigned
+                // to slots; pressing "More >>" clears the vanilla buttons and fills the freed
+                // slots with registered modded weapons.
                 UIinteractor.EnsureMoreButtonCreated(__instance.gameObject.transform);
-                UIinteractor.AssignWeaponsToFreeSlots(__instance.gameObject.transform);
             }
         }
 
