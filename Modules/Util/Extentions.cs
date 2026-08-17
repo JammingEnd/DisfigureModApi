@@ -29,18 +29,32 @@ namespace DisfigureModApi.Util
         /// <returns>The built display GameObject (already parented to the displayimagehandler).</returns>
         public static GameObject SetWeaponPreviewStats(this displayimagehandler instance, WeaponPreviewStats stats, WeaponId previewSprite, bool isMelee = false)
         {
+            instance.DestroyModdedPreview();
+
             GameObject displayedObj = GameObject.Instantiate(instance.weaponDisplays[0], instance.gameObject.transform);
             displayedObj.transform.position = new Vector3(25.66f, -65, -15.5645f);
             displayedObj.BuildPreview(stats,
              previewSprite,
              instance.weaponDisplays.ToList(),
              isMelee);
-            if (instance.gameObject.transform.childCount > 1)
-            {
-                ModApi.Log.Equals("Destroying child");
-                GameObject.Destroy(instance.gameObject.transform.GetChild(0).gameObject);
-            }
             return displayedObj;
+        }
+
+        /// <summary>
+        /// Destroys any modded preview display built by the API (clones named with
+        /// "(clone of ..."), so vanilla weapon displays are never affected.
+        /// </summary>
+        public static void DestroyModdedPreview(this displayimagehandler instance)
+        {
+            Transform root = instance.gameObject.transform;
+            for (int i = root.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = root.GetChild(i).gameObject;
+                if (child.name.Contains("(clone of"))
+                {
+                    GameObject.DestroyImmediate(child);
+                }
+            }
         }
 
         public static Transform GetChildTransformByName(this Transform transform, string name)

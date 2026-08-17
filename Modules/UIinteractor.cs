@@ -280,7 +280,8 @@ namespace DisfigureModApi.UImanipulation
         /// <summary>
         /// Builds the home-screen preview for a modded weapon when its display is shown
         /// (the game calls <see cref="displayimagehandler.showChosenWeapon(string)"/> with the
-        /// selected weapon's name).
+        /// selected weapon's name). For vanilla weapons, removes any modded preview so the
+        /// two displays never overlap (hovering a vanilla button updates the preview too).
         /// </summary>
         [HarmonyPatch(typeof(displayimagehandler), "showChosenWeapon")]
         public class UIinteractorWeaponDisplayShow
@@ -290,6 +291,7 @@ namespace DisfigureModApi.UImanipulation
                 NewWeapon weapon = NewWeaponInitiator.GetWeapon(weaponname);
                 if (weapon == null)
                 {
+                    __instance.DestroyModdedPreview();
                     return;
                 }
 
