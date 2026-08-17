@@ -22,31 +22,17 @@ namespace DisfigureModApi.Util
         }
 
         /// <summary>
-        /// it Builds the preview of the weapon but also literally changes the weapon stats
+        /// Builds a preview display on the home screen for a weapon. Mirrors the game's flow:
+        /// the display is shown by <see cref="displayimagehandler.showChosenWeapon(string)"/>
+        /// and stat sliders are driven by <see cref="weaponstatsliders"/>.
         /// </summary>
-        /// <param name="baseWeapon"> What is being edited </param>
-        /// <param name="newName"> The new name shown under the image </param>
-        /// <param name="newDesc"> The new description </param>
-        /// <param name="damageSliderStat"> The Initial damage it will deal </param>
-        /// <param name="fireRateStat"> The new fire rate (idk how the logic works yet) </param>
-        /// <param name="bulletSpeedStat"> The new bullet speed (1 = 10 units per second, pistol damage is 50) </param>
-        /// <param name="bulletSizeStat"> The starting bullet size </param>
-        /// <param name="newSprite"> The new image(s) being displayed </param>
-        /// <param name="isMelee"> Is it an melee weapon? default : False </param>
-        /// <returns> An edit / new weapon. !!! these are used in the actual game too </returns>
-        public static GameObject SetWeaponPreviewStats(this displayimagehandler instance, string name, string desc, float damage, float fireRate, float bulletSpeed, float BulletSize, WeaponId previewSprite, bool isMelee = false)
+        /// <returns>The built display GameObject (already parented to the displayimagehandler).</returns>
+        public static GameObject SetWeaponPreviewStats(this displayimagehandler instance, WeaponPreviewStats stats, WeaponId previewSprite, bool isMelee = false)
         {
             GameObject displayedObj = GameObject.Instantiate(instance.weaponDisplays[0], instance.gameObject.transform);
             displayedObj.transform.position = new Vector3(25.66f, -65, -15.5645f);
-            displayedObj.BuildPreview(new WeaponPreviewStats() {
-                WeaponName = name,
-                WeaponDescription = desc,
-                WeaponDamage = damage,
-                WeaponFireRate = fireRate,
-                BulletSpeed = bulletSpeed,
-                BulletSize = BulletSize
-            }, 
-             previewSprite, 
+            displayedObj.BuildPreview(stats,
+             previewSprite,
              instance.weaponDisplays.ToList(),
              isMelee);
             if (instance.gameObject.transform.childCount > 1)
@@ -68,48 +54,6 @@ namespace DisfigureModApi.Util
             }
             return null;
         }
-
-        public static int FromPreviewIdToModelId(this WeaponId id)
-        {
-            switch (id)
-            {
-                case WeaponId.Pistol:
-                    return 10; // Original id is 0 but the pistol DOESNT FKIN WORK
-                case WeaponId.Shotgun:
-                    return 1;
-                case WeaponId.Sniper:
-                    return 2;                 
-                case WeaponId.Knife:
-                    return 3;
-                case WeaponId.DoubleKatana:
-                    return 4;
-                case WeaponId.GreatSword:
-                    return 5;
-                case WeaponId.Scythe:
-                    return 6;
-                case WeaponId.LeverAction:
-                    return 7;
-                case WeaponId.Famas:
-                    return 8;
-                case WeaponId.Minigun:
-                    return 9;
-                case WeaponId.Revolver:
-                    return 10;
-                case WeaponId.Saw:
-                    return 11;
-                case WeaponId.Railgun:
-                    return 12;
-                case WeaponId.AkimboSmg:
-                    return 13;
-                case WeaponId.Halberd:
-                    return 14;
-                case WeaponId.PulseRifle:
-                    return 15;
-                default:
-                    return 0;
-            }
-        }
-
 
         public static bool IsAvaibleButton(this GameObject obj)
         {

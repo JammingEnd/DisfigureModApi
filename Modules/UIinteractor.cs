@@ -3,108 +3,97 @@ using HarmonyLib;
 using UnityEngine.UI;
 using DisfigureModApi.Util;
 using DisfigureModApi.WeaponCreationTools;
+using System.Collections.Generic;
 
 namespace DisfigureModApi.UImanipulation
 {
     public class UIinteractor
     {
-        /// <summary>
-        /// List of all the newly added weapons (from  the buttons)
-        /// </summary>
-        public static Dictionary<string[], bool> NewlyAddedWeaponsList = new();
-
-        /// <summary>
-        /// List of all the base-game weapon prefabs
-        /// </summary>
-        public static Dictionary<GameObject, string> weaponPrefabs = new();
-
         public static string currentButtonName = "";
 
         public static void IniUIInteractor()
         {
-            //UIChanger.ChangeUI();
-            NewlyAddedWeaponsList.Clear();
+            currentButtonName = "";
         }
 
         [HarmonyPatch(typeof(weaponselect), "OnPointerEnter")]
         public class UIinteractorOnPointerEnter
         {
-            public static void Posfix(weaponselect __instance)
+            public static void Postfix(weaponselect __instance)
             {
                 currentButtonName = __instance.gameObject.name;
             }
         }
 
-        [HarmonyPatch(typeof(weaponselect), "Start")]
-        public class UIinteractorOnEnable
-        {
-            public static void Postfix(weaponselect __instance)
-            {
-                if (!__instance.gameObject.IsAvaibleButton())
-                {
-                    return;
-                }
-            }
-        }
-
+        /// <summary>
+        /// Assigns each registered modded weapon to a free weapon slot on the home screen.
+        /// A free slot is a <see cref="weaponselect"/> button whose reference is not yet
+        /// a vanilla weapon. (A "clear vanilla buttons" menu action is planned so any slot
+        /// can be reused for modded weapons.)
+        /// </summary>
         [HarmonyPatch(typeof(StartMenu), "OnEnable")]
         public class UIinteractorStart
         {
             public static void Postfix(StartMenu __instance)
             {
-                // Iterate through all the childs of the start menu
-                for (int i = 0; i < __instance.gameObject.transform.childCount; i++)
+                if (NewWeaponInitiator.newWeapons.Count == 0)
                 {
-                    if (NewWeaponInitiator.newWeapons.ToList()[NewWeaponInitiator.newWeapons.Count - 1].Key.IsGenereated)
+                    return;
+                }
+
+                // Track which slots already hold a weapon so we only fill free ones.
+                foreach (Transform child in __instance.gameObject.transform)
+                {
+                    if (!child.gameObject.IsAvaibleButton())
+                    {
+                        continue;
+                    }
+
+                    weaponselect wpS = child.GetComponent<weaponselect>();
+                    if (wpS == null)
+                    {
+                        continue;
+                    }
+
+                    if (NewWeaponInitiator.GetWeapon(wpS.weaponname) != null)
+                    {
+                        // Already assigned to a modded weapon; keep it.
+                        continue;
+                    }
+
+                    Text textComp = child.GetChild(0).GetComponent<Text>();
+                    if (textComp == null || textComp.text != "COMING SOON")
+                    {
+                        continue;
+                    }
+
+                    NewWeapon weapon = NewWeaponInitiator.newWeapons.Find(w => !IsAssigned(w));
+                    if (weapon == null)
                     {
                         return;
                     }
-                    // Get the current child for use in the loop
-                    Transform currentChild = __instance.gameObject.transform.GetChild(i);
-                    if (!currentChild.gameObject.IsAvaibleButton())
-                    {
-                        // If the current child is not a button, skip it
-                        continue;
-                    }
-                    Text textComp;
-                    if (currentChild.transform.GetChild(0).TryGetComponent(out Text result))
-                    {
-                        // If the current child has a text component, assign it to the textComp variable
-                        if(result.gameObject.activeSelf == false)
-                        {
-                            continue;
-                        }
-                        textComp = result;
-                        textComp.text = "COMING SOON";
-                    }
-                    else
-                    {
-                        continue;
-                    }
 
-                    // If the text of the button is a "COMING SOON" button
-                    if (textComp.text == "COMING SOON")
-                    {
-                       
-
-                        foreach (var weapon in NewWeaponInitiator.newWeapons)
-                        {
-                            if (weapon.Key.IsGenereated == false)
-                            {
-                                ModApi.Log.LogMessage("Generating Weapon: " + weapon.Key.weaponName);
-                                textComp.text = weapon.Key.weaponName;
-                                weapon.Key.IsGenereated = true;
-
-                                weaponselect wpS = textComp.transform.parent.GetComponent<weaponselect>();
-                                wpS.weaponname = weapon.Key.weaponReference;
-                                wpS.enabled = true;
-                                textComp.transform.parent.GetComponent<Button>().enabled = true;
-
-                                break;
-                            }
-                        }
-                    }
+                    ModApi.Log.LogMessage("Assigning weapon: " + weapon.weaponName + " to slot " + child.name);
+                    textComp.text = weapon.weaponName;
+                    wpS.weaponname = weapon.weaponReference;
+                    wpS.unlockedString = weapon.UnlockKey;
+                    wpS.weaponIsUnlocked = weapon.IsUnlocked;
+                    wpS.enabled = true;
+                    child.GetComponent<Button>().enabled = true;
+                    assignedWeapons.Add(weapon);
                 }
+            }
+
+            private static readonly List<NewWeapon> assignedWeapons = new();
+
+            public static void ResetAssignments()
+            {
+                assignedWeapons.Clear();
+            }
+
+            private static bool IsAssigned(NewWeapon weapon)
+            {
+                return assignedWeapons.Contains(weapon);
             }
         }
 
@@ -113,66 +102,28 @@ namespace DisfigureModApi.UImanipulation
         {
             public static void Postfix(StartMenu __instance)
             {
-                // Reset the generated weapons to false, otherwise the weapons will not be generated
-                foreach (var weapon in NewWeaponInitiator.newWeapons)
-                {
-                    weapon.Key.IsGenereated = false;
-                }
+                // Reset assignment bookkeeping so the menu can be rebuilt next time.
+                UIinteractorStart.ResetAssignments();
             }
         }
 
+        /// <summary>
+        /// Builds the home-screen preview for a modded weapon when its display is shown
+        /// (the game calls <see cref="displayimagehandler.showChosenWeapon(string)"/> with the
+        /// selected weapon's name).
+        /// </summary>
         [HarmonyPatch(typeof(displayimagehandler), "showChosenWeapon")]
         public class UIinteractorWeaponDisplayShow
         {
-            public static void Prefix(displayimagehandler __instance, ref string weaponname)
+            public static void Postfix(displayimagehandler __instance, string weaponname)
             {
-            }
-
-            public static void Postfix(displayimagehandler __instance, ref string weaponname)
-            {
-                foreach (var weapon in NewWeaponInitiator.newWeapons)
+                NewWeapon weapon = NewWeaponInitiator.GetWeapon(weaponname);
+                if (weapon == null)
                 {
-                    if (weaponname == weapon.Key.weaponReference)
-                    {
-                        weapon.Key.BuildWeapon(__instance, weaponname);
-                    }
+                    return;
                 }
 
-                HashSet<GameObject> seen = new HashSet<GameObject>();
-                List<GameObject> toDestroy = new List<GameObject>();
-
-                for (int i = 0; i < __instance.gameObject.transform.childCount; i++)
-                {
-                    seen.Add(__instance.transform.GetChild(i).gameObject);
-                }
-
-                foreach (var obj in seen)
-                {
-                    if (obj == null) continue; // Skip null GameObjects
-
-                    // Check if the object matches the string condition
-                    if (obj.name.Contains(weaponname) || !seen.Add(obj))
-                    {
-                        // Either it's a duplicate or doesn't match the string condition
-                        toDestroy.Add(obj);
-                    }
-                }
-
-                string refname = weaponname;
-                // Destroy all unwanted objects
-                foreach (var obj in toDestroy)
-                {
-                    if (obj.gameObject.name.Contains(weaponname))
-                    {
-                        if (toDestroy.Where(x => x.name.Contains(refname)).Count() == 1)
-                        {
-                            continue;
-                        }
-                    }
-
-                    seen.Remove(obj); // Remove from the list
-                    GameObject.Destroy(obj); // Destroy the GameObject
-                }
+                weapon.BuildWeapon(__instance);
             }
         }
     }

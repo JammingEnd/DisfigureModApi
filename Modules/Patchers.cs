@@ -23,77 +23,42 @@ namespace DisfigureModApi
     [HarmonyPatch(typeof(weaponselect), "Start")]
     public class WeaponSelectPatchStart
     {
+        /// <summary>
+        /// Applies a modded weapon's persisted unlock state to its button
+        /// (mirrors the game reading FBPP "<c>weaponnameUnlocked</c>").
+        /// </summary>
         public static void Postfix(weaponselect __instance)
         {
-            __instance.selectedColor = Color.red;
-            if (__instance.weaponIsUnlocked == false)
+            NewWeapon weapon = NewWeaponInitiator.GetWeapon(__instance.weaponname);
+            if (weapon == null)
             {
+                return;
             }
+
+            __instance.unlockedString = weapon.UnlockKey;
+            __instance.weaponIsUnlocked = weapon.IsUnlocked;
+            __instance.selectedColor = Color.red;
         }
     }
 
     /// <summary>
-    /// Makes a weapon value true when selected
+    /// Persists the selected modded weapon using the same FBPP key the game uses
+    /// ("selectedWeapon"), so the choice travels from the home screen to the match scene.
     /// </summary>
     [HarmonyPatch(typeof(weaponselect), "selectWeapon")]
     public class WeaponSelectPatchOnSelect
     {
         public static void Postfix(weaponselect __instance)
         {
+            NewWeapon weapon = NewWeaponInitiator.GetWeapon(__instance.weaponname);
+            if (weapon == null)
+            {
+                return;
+            }
+
             ModApi.Log.LogMessage("Weapon selected: " + __instance.weaponname);
-            // Reset all weapons to false
-            foreach (var item in NewWeaponInitiator.newWeapons)
-            {
-                NewWeaponInitiator.newWeapons[item.Key] = false;
-            }
-
-            // Set the selected weapon to true
-            // for all (currently) buttons
-            if (__instance.gameObject.name == "GunButton (27)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
-            if (__instance.gameObject.name == "GunButton (28)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
-
-            if (__instance.gameObject.name == "GunButton (31)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
-            if (__instance.gameObject.name == "GunButton (32)")
-            {
-                foreach (var item in NewWeaponInitiator.newWeapons)
-                {
-                    if (item.Key.weaponReference == __instance.weaponname)
-                    {
-                        NewWeaponInitiator.newWeapons[item.Key] = true;
-                        NewWeaponInitiator.CurrentWeapon = item.Key.HeldWeapon;
-                    }
-                }
-            }
+            weapon.Select();
+            __instance.dIH?.showChosenWeapon(__instance.weaponname);
         }
     }
 
@@ -137,18 +102,33 @@ namespace DisfigureModApi
 
         private static void SetupReferences(ObjectPool pool, PlayerStats stats, WeaponManager wM)
         {
-            GameObject instanceHeldWeapon = WeaponUtils.GetActiveWeapon().weaponPrefab;
+            NewWeapon activeWeapon = WeaponUtils.GetActiveWeapon();
+            if (activeWeapon == null)
+            {
+                return;
+            }
+
+            GameObject instanceHeldWeapon = WeaponUtils.SetHeldWeapon(pool, wM, activeWeapon);
+            if (instanceHeldWeapon == null)
+            {
+                return;
+            }
+
             instanceHeldWeapon.transform.position = stats.gameObject.transform.position;
             instanceHeldWeapon.transform.rotation = stats.gameObject.transform.rotation;
-            instanceHeldWeapon.transform.SetParent(wM.weaponModels.transform);
 
-            stats.windUpActivateParticle = instanceHeldWeapon.transform.GetChild(1).GetChild(0).gameObject;
-            stats.windUpActivateParticle.SetActive(false);
+            if (instanceHeldWeapon.transform.childCount >= 2)
+            {
+                Transform child1 = instanceHeldWeapon.transform.GetChild(1);
+                if (child1.childCount >= 2)
+                {
+                    stats.windUpActivateParticle = child1.GetChild(0).gameObject;
+                    stats.windUpActivateParticle.SetActive(false);
 
-            stats.windUpReadyFlashParticle = instanceHeldWeapon.transform.GetChild(1).GetChild(1).gameObject;
-            stats.windUpReadyFlashParticle.SetActive(false);
-
-            //GameObject.Instantiate(WeaponUtils.SetHeldWeapon(pool, NewWeaponInitiator.CurrentWeapon), wM.weaponModels.transform.GetChild(0));
+                    stats.windUpReadyFlashParticle = child1.GetChild(1).gameObject;
+                    stats.windUpReadyFlashParticle.SetActive(false);
+                }
+            }
 
             instanceHeldWeapon.SetActive(true);
         }
@@ -160,16 +140,6 @@ namespace DisfigureModApi
         public static void Postfix(ObjectPool __instance)
         {
             __instance.pS.gameObject.AddComponent<ModdedPlayerStats>();
-
-            if (WeaponUtils.GetActiveWeapon() == null)
-            {
-                return;
-            }
-
-            NewWeapon activeWeapon = WeaponUtils.GetActiveWeapon();
-            WeaponId id = activeWeapon.HeldWeapon;
-            ModApi.Log.LogMessage($"Active weapon: {id}");
-            WeaponUtils.GetActiveWeapon().weaponPrefab = GameObject.Instantiate(__instance.weaponsModelList[id.FromPreviewIdToModelId()], Vector3.zero, Quaternion.Euler(Vector3.zero));
         }
     }
 

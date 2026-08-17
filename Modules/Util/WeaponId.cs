@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace DisfigureModApi.Util
+﻿namespace DisfigureModApi.Util
 {
     /// <summary>
-    /// The number corresponds to the Preview instance in the displaymanager
+    /// Index into <see cref="displayimagehandler.weaponDisplays"/> — the preview sprite
+    /// shown for a weapon on the home screen. NOTE: this is the <b>preview</b> index,
+    /// not the held-model index. The held model index is
+    /// <see cref="WeaponCreationTools.NewWeapon.modelIndex"/> (into
+    /// <see cref="ObjectPool.weaponsModelList"/>).
     /// </summary>
     public enum WeaponId
     {
@@ -27,6 +25,5 @@ namespace DisfigureModApi.Util
         AkimboSmg = 13,
         Halberd = 14,
         PulseRifle = 15,
-
     }
 }
