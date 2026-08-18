@@ -36,6 +36,8 @@ namespace DisfigureModApi.Modules
 
         public NewWeaponUpgrade(string name, DesclinesWrapper description, string ownerWeaponRefernce)
         {
+            // desclines is a [SerializeField] field: null when created via new in IL2CPP.
+            this.desclines = new string[2];
             this.upgradeName = name;
             this.desclines[0] = description.UpperLine;
             this.desclines[1] = description.LowerLine;
