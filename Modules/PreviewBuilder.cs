@@ -30,7 +30,7 @@ namespace DisfigureModApi.UImanipulation
         {
             // This is where the preview will be built
             GameObject baseWeaponObject = baseWeapon;
-            stats.BulletSpeed *= 10;
+            float bulletSpeed = stats.BulletSpeed * 10f;
             if (!isMelee)
             {
                 baseWeaponObject.transform.GetChild(7).GetComponent<Text>().text = stats.WeaponName;
@@ -38,11 +38,11 @@ namespace DisfigureModApi.UImanipulation
                 weaponstatsliders slider = baseWeaponObject.transform.GetChild(10).GetComponent<weaponstatsliders>();
                 slider.projectile.damage = stats.WeaponDamage;
                 slider.projectile.fireRate = stats.WeaponFireRate;
-                slider.projectile.projSpeed = stats.BulletSpeed;
+                slider.projectile.projSpeed = bulletSpeed;
                 slider.projectile.ogSize *= stats.BulletSize;
                 slider.bulletDamageStat = stats.WeaponDamage;
                 slider.fireRateStat = stats.WeaponFireRate;
-                slider.bulletSpeedStat = stats.BulletSpeed;
+                slider.bulletSpeedStat = bulletSpeed;
                 slider.bulletSizeStat *= stats.BulletSize;
 
                 Image retrievedImg = currentAvaibleClones[(int)newSprite].transform.GetChild(6).GetComponent<Image>();
