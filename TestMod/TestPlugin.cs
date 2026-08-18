@@ -76,5 +76,59 @@ public class TestPlugin : BasePlugin
             statName = "clipsize",
             change = 5f
         });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Reload",
+            new DesclinesWrapper { UpperLine = "+25% reload speed", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "reloadspeed",
+            change = 0.25f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Accuracy",
+            new DesclinesWrapper { UpperLine = "+15% accuracy", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "accuracy",
+            change = 0.15f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Spread",
+            new DesclinesWrapper { UpperLine = "-10% spread", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "spread",
+            change = -0.1f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Bullet Speed",
+            new DesclinesWrapper { UpperLine = "+30% bullet speed", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "bulletspeed",
+            change = 0.3f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Bullet Size",
+            new DesclinesWrapper { UpperLine = "+20% bullet size", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "bulletsize",
+            change = 0.2f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Piercing",
+            new DesclinesWrapper { UpperLine = "+1 piercing", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "piercing",
+            change = 1f
+        });
     }
 }
