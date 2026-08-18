@@ -224,8 +224,6 @@ namespace DisfigureModApi.Modules
                 }
                 index++;
             }
-
-            ModApi.Log.LogMessage("Wired menu perks for " + weaponRef + " (" + index + " cards).");
         }
 
         /// <summary>
