@@ -1,6 +1,8 @@
 using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
+using DisfigureModApi.Modules;
+using DisfigureModApi.UpgradeCreationTools;
 using DisfigureModApi.Util;
 using DisfigureModApi.WeaponCreationTools;
 
@@ -42,5 +44,37 @@ public class TestPlugin : BasePlugin
         testWeapon.Unlock(); // FBPP: SetBool("TestWeaponUnlocked", true)
         NewWeaponInitiator.AddWeapon(testWeapon);
         Log.LogMessage("Registered test weapon: " + testWeapon.weaponName);
+
+        RegisterTestPerks();
+    }
+
+    private static void RegisterTestPerks()
+    {
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Damage",
+            new DesclinesWrapper { UpperLine = "+25 damage", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "damage",
+            change = 25f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Fire Rate",
+            new DesclinesWrapper { UpperLine = "+20% fire rate", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "firerate",
+            change = 0.2f
+        });
+
+        NewWeaponUpgradeRegistry.RegisterNewWeaponUpgrade(new NewWeaponUpgrade(
+            "Test Clip Size",
+            new DesclinesWrapper { UpperLine = "+5 clip size", LowerLine = "TestWeapon perk" },
+            "TestWeapon")
+        {
+            statName = "clipsize",
+            change = 5f
+        });
     }
 }
