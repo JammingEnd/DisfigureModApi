@@ -262,7 +262,22 @@ namespace DisfigureModApi
     {
         public static void Postfix(weaponupgradescreen __instance)
         {
-            __instance.AddNewWeaponUpgradeTreesToPlayer(true);
+            // Vanilla Awake resolves the perk tree via a hardcoded switch on the selected
+            // weapon name, so an unknown (modded) name would leave temp as the pistol tree.
+            // For modded weapons, build our own tree and point temp at it.
+            NewWeapon active = WeaponUtils.GetActiveWeapon();
+            if (active == null)
+            {
+                return;
+            }
+
+            bool keepPistol = NewWeaponUpgradeRegistry.KeepsPistolUpgrades(active.weaponReference);
+            GameObject tree = NewWeaponUpgradeUtils.GetTreeForWeapon(__instance, active.weaponReference)
+                              ?? __instance.AddNewWeaponUpgradeTreesToPlayer(keepPistol);
+            if (tree != null)
+            {
+                __instance.temp = tree;
+            }
         }
     }
 
@@ -271,34 +286,27 @@ namespace DisfigureModApi
     {
         public static void Postfix(weaponupgradescreen __instance)
         {
-            ModApi.Log.LogMessage(WeaponUtils.GetActiveWeapon().weaponName);
-            GameObject currentUpgrades = __instance.weaponUpgradesList[__instance.weaponUpgradesList.Count - 1];
-            if (WeaponUtils.GetActiveWeapon() != null)
+            NewWeapon active = WeaponUtils.GetActiveWeapon();
+
+            GameObject currentUpgrades = active != null
+                ? NewWeaponUpgradeUtils.GetTreeForWeapon(__instance, active.weaponReference)
+                : null;
+            if (currentUpgrades == null)
             {
-           
-
-                __instance.temp = currentUpgrades;
-                for (int i = 0; i < 8; i++)
-                {
-                    GameObject singleUpgrade = GameObject.Instantiate(currentUpgrades.transform.GetChild(i).gameObject);
-                    ModApi.Log.LogMessage("Spawning upgrade: " + singleUpgrade.name);
-                    //singleUpgrade.transform.localPosition = __instance.transformPositions[i].position;
-                    //singleUpgrade.transform.parent = __instance.transformPositions[i];
-                    __instance.chosenList.Add(singleUpgrade);
-
-                }
+                // Fall back to whatever vanilla Awake resolved.
+                currentUpgrades = __instance.temp;
             }
-        }
-
-        private static void Try1(weaponupgradescreen __instance)
-        {
-            GameObject upgrades = __instance.weaponUpgradesList[__instance.weaponUpgradesList.Count - 1];
-            __instance.temp = upgrades;
-            for (int i = 0; i < 8; i++)
+            if (currentUpgrades == null)
             {
-                GameObject singleUpgrade = upgrades.transform.GetChild(i).gameObject;
-                singleUpgrade.transform.localPosition = __instance.transformPositions[i].position;
-                singleUpgrade.transform.parent = __instance.transformPositions[i];
+                ModApi.Log.LogWarning("WeaponUpgradeScreenOnUpgrade: no upgrade tree found.");
+                return;
+            }
+
+            __instance.temp = currentUpgrades;
+            for (int i = 0; i < currentUpgrades.transform.childCount && i < 8; i++)
+            {
+                GameObject singleUpgrade = GameObject.Instantiate(currentUpgrades.transform.GetChild(i).gameObject);
+                ModApi.Log.LogMessage("Spawning upgrade: " + singleUpgrade.name);
                 __instance.chosenList.Add(singleUpgrade);
             }
         }

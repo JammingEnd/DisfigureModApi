@@ -17,9 +17,17 @@ namespace DisfigureModApi.Modules
 
         public static void RegisterNewWeaponUpgradeTree(string refname, bool keepPistolUpgrades = false)
         {
-            NewTreeDef.Add(refname, keepPistolUpgrades);
-        }   
+            NewTreeDef[refname] = keepPistolUpgrades;
+        }
 
+        /// <summary>
+        /// Whether a modded weapon's tree should inherit the pistol's perk children
+        /// (false = clean, only that weapon's own registered perks).
+        /// </summary>
+        public static bool KeepsPistolUpgrades(string weaponRef)
+        {
+            return NewTreeDef.TryGetValue(weaponRef, out bool keep) && keep;
+        }
     }
 
     public class NewWeaponUpgrade : weaponupgrade
@@ -37,56 +45,148 @@ namespace DisfigureModApi.Modules
 
     public static class NewWeaponUpgradeUtils
     {
+        private const int MaxUpgradeSlots = 8;
+
+        /// <summary>
+        /// Finds the modded weapon's upgrade-tree GameObject already added to the screen's
+        /// <c>weaponUpgradesList</c> (named <c>"&lt;ref&gt;WeaponUpgrades"</c>), or null.
+        /// </summary>
+        public static GameObject GetTreeForWeapon(weaponupgradescreen instance, string weaponRef)
+        {
+            if (instance == null || instance.weaponUpgradesList == null)
+            {
+                return null;
+            }
+            string targetName = weaponRef + "WeaponUpgrades";
+            foreach (GameObject tree in instance.weaponUpgradesList)
+            {
+                if (tree != null && tree.name == targetName)
+                {
+                    return tree;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Creates (or reuses) the upgrade tree for the active modded weapon and adds it to
+        /// the screen's <c>weaponUpgradesList</c>. Clones the pistol tree as the layout
+        /// template; when <paramref name="keepPistolUpgrades"/> is false, blanks every slot
+        /// and fills them with the weapon's registered perks only.
+        /// </summary>
         public static GameObject AddNewWeaponUpgradeTreesToPlayer(this weaponupgradescreen instance, bool keepPistolUpgrades)
         {
-            GameObject newTreeInstance = GameObject.Instantiate(instance.weaponUpgradesList[0], instance.weaponUpgradesList[0].transform.parent);
-            newTreeInstance.name = WeaponUtils.GetActiveWeapon().weaponReference + "WeaponUpgrades";
+            NewWeapon active = WeaponUtils.GetActiveWeapon();
+            if (instance == null || instance.weaponUpgradesList == null || instance.weaponUpgradesList.Count == 0)
+            {
+                ModApi.Log.LogWarning("AddNewWeaponUpgradeTreesToPlayer: upgrade screen not ready.");
+                return null;
+            }
+            if (active == null)
+            {
+                ModApi.Log.LogWarning("AddNewWeaponUpgradeTreesToPlayer: no active modded weapon.");
+                return null;
+            }
+
+            string weaponRef = active.weaponReference;
+
+            GameObject existing = GetTreeForWeapon(instance, weaponRef);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            GameObject template = instance.weaponUpgradesList[0];
+            GameObject newTreeInstance = GameObject.Instantiate(template, template.transform.parent);
+            newTreeInstance.name = weaponRef + "WeaponUpgrades";
 
             if (keepPistolUpgrades)
             {
-                ModApi.Log.LogMessage("Keeping pistol upgrades for modded weapon");
-                instance.weaponUpgradesList.Add(newTreeInstance);
-                return newTreeInstance;
+                ModApi.Log.LogMessage("Keeping pistol upgrades for modded weapon " + weaponRef);
+            }
+            else
+            {
+                ResetTreeToModded(newTreeInstance);
+                PopulateTree(newTreeInstance, weaponRef);
             }
 
+            instance.weaponUpgradesList.Add(newTreeInstance);
+            ModApi.Log.LogMessage("Added " + newTreeInstance.name + " to player weapon upgrades");
+            return newTreeInstance;
+        }
 
-            int currentIndex = 0;
+        /// <summary>
+        /// Blanks every perk slot of a freshly cloned tree so no vanilla (pistol) perk
+        /// content leaks into a modded weapon's tree.
+        /// </summary>
+        private static void ResetTreeToModded(GameObject tree)
+        {
+            for (int i = 0; i < tree.transform.childCount && i < MaxUpgradeSlots; i++)
+            {
+                if (!tree.transform.GetChild(i).TryGetComponent(out weaponupgrade wU))
+                {
+                    continue;
+                }
+
+                wU.upgradeName = "";
+                wU.statdescription = "";
+                wU.desclines = new string[wU.desclines == null ? 2 : wU.desclines.Length];
+                wU.statName = "";
+                wU.statName2 = "";
+                wU.statName3 = "";
+                wU.statName4 = "";
+                wU.statName5 = "";
+                wU.change = 0f;
+                wU.change2 = 0f;
+                wU.change3 = 0f;
+                wU.change4 = 0f;
+                wU.change5 = 0f;
+            }
+        }
+
+        /// <summary>
+        /// Overwrites the tree's perk slots with the registered perks owned by
+        /// <paramref name="weaponRef"/>, in registration order (capped at 8 slots).
+        /// </summary>
+        private static void PopulateTree(GameObject tree, string weaponRef)
+        {
+            int slot = 0;
             foreach (var weaponUpgrade in NewWeaponUpgradeRegistry.NewWeaponUpgrades)
             {
-              
-                if (currentIndex >= 8)
+                if (slot >= MaxUpgradeSlots)
                 {
                     break;
                 }
-
-
-                if (weaponUpgrade.ownerWeaponReference == WeaponUtils.GetActiveWeapon().weaponReference)
+                if (weaponUpgrade.ownerWeaponReference != weaponRef)
                 {
-                    if (newTreeInstance.transform.GetChild(currentIndex).TryGetComponent(out weaponupgrade wU))
-                    {
-                        wU.upgradeName = weaponUpgrade.name;
-                        wU.desclines = weaponUpgrade.desclines;
-                        wU.statName = weaponUpgrade.statName;
-                        wU.statName2 = weaponUpgrade.statName2;
-                        wU.statName3 = weaponUpgrade.statName3;
-                        wU.statName4 = weaponUpgrade.statName4;
-                        wU.statName5 = weaponUpgrade.statName5;
-
-                        wU.change = weaponUpgrade.change;
-                        wU.change2 = weaponUpgrade.change2;
-                        wU.change3 = weaponUpgrade.change3;
-                        wU.change4 = weaponUpgrade.change4;
-                        wU.change5 = weaponUpgrade.change5;
-
-                    }
+                    continue;
+                }
+                if (tree.transform.childCount <= slot)
+                {
+                    break;
+                }
+                if (!tree.transform.GetChild(slot).TryGetComponent(out weaponupgrade wU))
+                {
+                    slot++;
+                    continue;
                 }
 
-                currentIndex++;
-            }
+                wU.upgradeName = weaponUpgrade.upgradeName;
+                wU.desclines = weaponUpgrade.desclines;
+                wU.statName = weaponUpgrade.statName;
+                wU.statName2 = weaponUpgrade.statName2;
+                wU.statName3 = weaponUpgrade.statName3;
+                wU.statName4 = weaponUpgrade.statName4;
+                wU.statName5 = weaponUpgrade.statName5;
 
-            ModApi.Log.LogMessage("Added" + newTreeInstance.name + " to player weapon upgrades");
-            instance.weaponUpgradesList.Add(newTreeInstance);   
-            return newTreeInstance;
+                wU.change = weaponUpgrade.change;
+                wU.change2 = weaponUpgrade.change2;
+                wU.change3 = weaponUpgrade.change3;
+                wU.change4 = weaponUpgrade.change4;
+                wU.change5 = weaponUpgrade.change5;
+
+                slot++;
+            }
         }
     }
 }
