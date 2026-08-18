@@ -49,9 +49,9 @@ namespace DisfigureModApi.WeaponCreationTools
         /// (<see cref="displayimagehandler.showChosenWeapon(string)"/>). Override to build a
         /// custom preview; the default builds one from <see cref="previewStats"/>.
         /// </summary>
-        public virtual void BuildWeapon(displayimagehandler instance)
+        public virtual GameObject BuildWeapon(displayimagehandler instance)
         {
-            instance.SetWeaponPreviewStats(previewStats, previewIndex, isMelee);
+            return instance.SetWeaponPreviewStats(previewStats, previewIndex, isMelee);
         }
 
         /// <summary>FBPP unlock key for this weapon: <c>"&lt;weaponReference&gt;Unlocked"</c>.</summary>

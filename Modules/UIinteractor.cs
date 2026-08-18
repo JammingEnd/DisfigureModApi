@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using HarmonyLib;
 using UnityEngine.UI;
+using DisfigureModApi.Modules;
 using DisfigureModApi.Util;
 using DisfigureModApi.WeaponCreationTools;
 using System.Collections.Generic;
@@ -297,7 +298,8 @@ namespace DisfigureModApi.UImanipulation
                     return;
                 }
 
-                weapon.BuildWeapon(__instance);
+                GameObject display = weapon.BuildWeapon(__instance);
+                NewWeaponUpgradeUtils.WireMenuPerksHandler(display, weapon.weaponReference);
             }
         }
     }
