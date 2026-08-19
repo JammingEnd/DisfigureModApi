@@ -36,7 +36,7 @@ public class TestPlugin : BasePlugin
                 WeaponDescription = "A test weapon registered through the mod API.",
                 WeaponDamage = 50f,
                 WeaponFireRate = 1f,
-                BulletSpeed = 10f,
+                BulletSpeed = 2.5f,
                 BulletSize = 1f
             }
         };

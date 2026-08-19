@@ -155,6 +155,16 @@ namespace DisfigureModApi
                 return;
             }
 
+            // Vanilla ObjectPool.Start calls PlayerStats.setProjStats with the pistol
+            // projectile's stats for any weapon name not in its hardcoded switch, so the
+            // actual in-game damage/speed/fire rate would be the pistol's. Override with
+            // the modded weapon's preview stats (mirrors BuildPreview's BulletSpeed * 10).
+            if (activeWeapon.previewStats != null)
+            {
+                WeaponPreviewStats ps = activeWeapon.previewStats;
+                stats.setProjStats(ps.WeaponDamage, ps.BulletSpeed * 10f, ps.WeaponFireRate);
+            }
+
             instanceHeldWeapon.transform.position = stats.gameObject.transform.position;
             instanceHeldWeapon.transform.rotation = stats.gameObject.transform.rotation;
 
