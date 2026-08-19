@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using DisfigureModApi.Modules;
+using DisfigureModApi.Modules.Content;
 using DisfigureModApi.UpgradeCreationTools;
 using DisfigureModApi.Util;
 using DisfigureModApi.WeaponCreationTools;
@@ -19,6 +20,10 @@ public class TestPlugin : BasePlugin
         Log.LogMessage("TestMod loading.....");
 
         RegisterTestContent();
+        UpgradeRegistry.RegisterStat("wandprojectileturnspeed", 200f);
+        UpgradeRegistry.RegisterUpgrade(new TestUpgrade());
+        AssetManager.LoadSprite("TestMod/Assets/TestUpgrade1.png", 100f);
+        
     }
 
     private static void RegisterTestContent()
@@ -131,4 +136,5 @@ public class TestPlugin : BasePlugin
             change = 1f
         });
     }
+    
 }

@@ -43,8 +43,11 @@ namespace DisfigureModApi
     }
 
     /// <summary>
-    /// Persists the selected modded weapon using the same FBPP key the game uses
+    /// Persists the selected weapon using the same FBPP key the game uses
     /// ("selectedWeapon"), so the choice travels from the home screen to the match scene.
+    /// The vanilla game reads this key from Unity PlayerPrefs, so our FBPP copy must
+    /// mirror vanilla selections too (otherwise a stale modded weapon name lingers and
+    /// its stats get applied to whatever vanilla weapon is picked next).
     /// </summary>
     [HarmonyPatch(typeof(weaponselect), "selectWeapon")]
     public class WeaponSelectPatchOnSelect
@@ -54,6 +57,8 @@ namespace DisfigureModApi
             NewWeapon weapon = NewWeaponInitiator.GetWeapon(__instance.weaponname);
             if (weapon == null)
             {
+                try { FBPP.SetString(NewWeapon.SelectedWeaponKey, __instance.weaponname); }
+                catch (Exception) { }
                 return;
             }
 
@@ -191,6 +196,21 @@ namespace DisfigureModApi
         public static void Postfix(ObjectPool __instance)
         {
             __instance.pS.gameObject.AddComponent<ModdedPlayerStats>();
+        }
+    }
+
+    /// <summary>
+    /// API-side content injection: applies every stat and upgrade tree registered with
+    /// <see cref="UpgradeRegistry"/> to the player. Runs after <c>ObjectPool.Awake</c>
+    /// (which adds <see cref="ModdedPlayerStats"/>), so content mods only register data
+    /// and never create their own patches.
+    /// </summary>
+    [HarmonyPatch(typeof(PlayerStats), "Start")]
+    public class PlayerStatsStartPatch
+    {
+        public static void Postfix(PlayerStats __instance)
+        {
+            UpgradeRegistry.ApplyToPlayer(__instance);
         }
     }
 

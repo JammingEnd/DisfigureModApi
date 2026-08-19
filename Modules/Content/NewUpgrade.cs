@@ -1,21 +1,12 @@
 ﻿using DisfigureModApi.Modules;
 using DisfigureModApi;
-using HarmonyLib;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DisfigureModApi.UpgradeCreationTools
 {
-    public class NewUpgradePath : upgradepathspanel
-    {
-    }
-
     public class UpgradeStatWrapper
     {
         public string name;
@@ -28,9 +19,21 @@ namespace DisfigureModApi.UpgradeCreationTools
         public string LowerLine;
     }
 
+    public class NewUpgrade : Upgrade
+    {
+        public bool isInitial = false;
+
+        /// <summary>
+        /// Content mods override this to build their upgrade tree into the player.
+        /// Called by the API's <c>PlayerStats.Start</c> patch once per match.
+        /// </summary>
+        public virtual void BuildUpgradeTree(PlayerStats pS) { }
+    }
+
     public class UpgradeRegistry
     {
         public static Dictionary<NewUpgrade, bool> newUpgrades = new Dictionary<NewUpgrade, bool>();
+        public static Dictionary<string, object> registeredStats = new Dictionary<string, object>();
 
         public static void RegisterUpgrade(NewUpgrade upgrade)
         {
@@ -38,16 +41,73 @@ namespace DisfigureModApi.UpgradeCreationTools
             newUpgrades.Add(upgrade, false);
         }
 
+        public static void RegisterStat(string name, float value)
+        {
+            registeredStats[name] = value;
+        }
+
+        public static void RegisterStat(string name, int value)
+        {
+            registeredStats[name] = value;
+        }
+
+        public static void RegisterStat(string name, bool value)
+        {
+            registeredStats[name] = value;
+        }
+
+        /// <summary>
+        /// Applies all registered content to a player at match start: seeds the
+        /// registered base stats into <see cref="ModdedPlayerStats"/> and builds every
+        /// registered upgrade tree via <see cref="NewUpgrade.BuildUpgradeTree"/>.
+        /// Guarded per player instance so it only runs once per match.
+        /// </summary>
+        public static void ApplyToPlayer(PlayerStats pS)
+        {
+            if (pS == null)
+            {
+                return;
+            }
+
+            ModdedPlayerStats modded = pS.gameObject.GetComponent<ModdedPlayerStats>();
+            if (modded == null)
+            {
+                modded = pS.gameObject.AddComponent<ModdedPlayerStats>();
+            }
+            if (modded.initialized)
+            {
+                return;
+            }
+            modded.initialized = true;
+
+            foreach (var kv in registeredStats)
+            {
+                switch (kv.Value)
+                {
+                    case float f:
+                        modded.moddedStats[kv.Key] = new ModdedStatWrapper(f);
+                        break;
+                    case int i:
+                        modded.moddedStats[kv.Key] = new ModdedStatWrapper(i);
+                        break;
+                    case bool b:
+                        modded.moddedStats[kv.Key] = new ModdedStatWrapper(b);
+                        break;
+                }
+            }
+
+            foreach (var kv in newUpgrades)
+            {
+                kv.Key.BuildUpgradeTree(pS);
+            }
+        }
+
         public static void Ini()
         {
             ModApi.Log.LogMessage("UpgradeRegistry loading.....");
             newUpgrades.Clear();
+            registeredStats.Clear();
         }
-    }
-
-    public class NewUpgrade : Upgrade
-    {
-        public bool isInitial = false;
     }
 
     public static class UpgradeUtils
@@ -57,16 +117,6 @@ namespace DisfigureModApi.UpgradeCreationTools
             Upgrade neWupgrade = upgrade.GetComponent<Upgrade>();
             GameObject newUpgradePathPanel = GameObject.Instantiate(neWupgrade.upgradePathsPanel);
             upgradepathspanel newPathPanel = newUpgradePathPanel.GetComponent<upgradepathspanel>();
-
-            /* for (int i = 0; i < newUpgradePathPanel.transform.childCount; i++)
-             {
-                 int childname = i + 1;
-                 GameObject child = newUpgradePathPanel.transform.FindChild(childname.ToString()).gameObject;
-                 if (child != null)
-                 {
-                    child.GetComponent<Button>().enabled = true;
-                 }
-             }*/
 
             newPathPanel.upgradesList[0] = upgrade;
             for (int i = 1; i < 6 + 1; i++)
@@ -85,66 +135,29 @@ namespace DisfigureModApi.UpgradeCreationTools
 
         public static bool HasChosenStat(this Upgrade upgrade, string name)
         {
-            if (upgrade.statName == name)
+            foreach (var statName in new[] { upgrade.statName, upgrade.statName2, upgrade.statName3, upgrade.statName4, upgrade.statName5 })
             {
-                return true;
-            }
-            if (upgrade.statName2 == name)
-            {
-                return true;
-            }
-            if (upgrade.statName3 == name)
-            {
-                return true;
-            }
-            if (upgrade.statName4 == name)
-            {
-                return true;
-            }
-            if (upgrade.statName5 == name)
-            {
-                return true;
+                if (statName == name)
+                {
+                    return true;
+                }
             }
             return false;
         }
 
         public static void AddNewStat(this ModdedPlayerStats stats, string name, bool value)
         {
-            stats.moddedStats.Add(new ModdedStatWrapper(name, value));
+            stats.moddedStats[name] = new ModdedStatWrapper(value);
         }
 
         public static void AddNewStat(this ModdedPlayerStats stats, string name, int value)
         {
-            stats.moddedStats.Add(new ModdedStatWrapper(name, value));
+            stats.moddedStats[name] = new ModdedStatWrapper(value);
         }
 
         public static void AddNewStat(this ModdedPlayerStats stats, string name, float value)
         {
-            stats.moddedStats.Add(new ModdedStatWrapper(name, value));
-        }
-
-        public static object GetStatByName(this ModdedPlayerStats stats, string name)
-        {
-            foreach (var stat in stats.moddedStats)
-            {
-                if (stat.GetStatName() == name)
-                {
-                    return stat.GetStatValue();
-                }
-            }
-            return null;
-        }
-
-        public static ModdedStatWrapper GetStatWrapperByName(this ModdedPlayerStats stats, string name)
-        {
-            foreach (var stat in stats.moddedStats)
-            {
-                if (stat.GetStatName() == name)
-                {
-                    return stat;
-                }
-            }
-            return null;
+            stats.moddedStats[name] = new ModdedStatWrapper(value);
         }
 
         private static Upgrade ClearStats(this Upgrade upgrade)
@@ -172,7 +185,32 @@ namespace DisfigureModApi.UpgradeCreationTools
             return upgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        {
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1);
+        }
+
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        {
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2);
+        }
+
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        {
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3);
+        }
+
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        {
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3, change4);
+        }
+
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        {
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3, change4, change5);
+        }
+
+        private static GameObject BuildUpgradeCore(PlayerStats pS, string name, string desc, GameObject unlock1, GameObject unlock2, DesclinesWrapper desclines, Sprite sprite = null, params UpgradeStatWrapper[] changes)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
@@ -183,8 +221,11 @@ namespace DisfigureModApi.UpgradeCreationTools
             upgrade.upgradeName = name;
             upgrade.statdescription = desc;
 
-            upgrade.statName = change1.name;
-            upgrade.change = change1.value;
+            ApplyStat(upgrade, changes, 0);
+            ApplyStat(upgrade, changes, 1);
+            ApplyStat(upgrade, changes, 2);
+            ApplyStat(upgrade, changes, 3);
+            ApplyStat(upgrade, changes, 4);
 
             if (desclines != null)
             {
@@ -211,6 +252,11 @@ namespace DisfigureModApi.UpgradeCreationTools
             {
                 upgrade.unlocks.Add(unlock2);
                 pS.unlockedUpgrades.Add(unlock2);
+            }
+
+            if (sprite != null)
+            {
+                upgrade.GetComponent<Image>().sprite = sprite;
             }
 
             ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
@@ -218,249 +264,36 @@ namespace DisfigureModApi.UpgradeCreationTools
             return newUpgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
+        private static void ApplyStat(Upgrade upgrade, UpgradeStatWrapper[] changes, int index)
         {
-            GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
-            newUpgrade.name = "U." + name;
-
-            Upgrade upgrade = newUpgrade.GetComponent<Upgrade>();
-            upgrade.ClearStats();
-
-            upgrade.upgradeName = name;
-            upgrade.statdescription = desc;
-
-            upgrade.statName = change1.name;
-            upgrade.change = change1.value;
-
-            if (desclines != null)
+            if (index >= changes.Length || changes[index] == null)
             {
-                if (desclines.UpperLine != null)
-                {
-                    upgrade.desclines[0] = desclines.UpperLine;
-                }
-                if (desclines.LowerLine != null)
-                {
-                    upgrade.desclines[1] = desclines.LowerLine;
-                }
-            }
-            else
-            {
-                upgrade.desclines[0] = " ";
-                upgrade.desclines[1] = " ";
+                return;
             }
 
-            if (change2 != null)
+            switch (index)
             {
-                upgrade.statName2 = change2.name;
-                upgrade.change2 = change2.value;
+                case 0:
+                    upgrade.statName = changes[index].name;
+                    upgrade.change = changes[index].value;
+                    break;
+                case 1:
+                    upgrade.statName2 = changes[index].name;
+                    upgrade.change2 = changes[index].value;
+                    break;
+                case 2:
+                    upgrade.statName3 = changes[index].name;
+                    upgrade.change3 = changes[index].value;
+                    break;
+                case 3:
+                    upgrade.statName4 = changes[index].name;
+                    upgrade.change4 = changes[index].value;
+                    break;
+                case 4:
+                    upgrade.statName5 = changes[index].name;
+                    upgrade.change5 = changes[index].value;
+                    break;
             }
-
-            if (unlock1 != null)
-            {
-                upgrade.unlocks.Add(unlock1);
-                pS.unlockedUpgrades.Add(unlock1);
-            }
-            if (unlock2 != null)
-            {
-                upgrade.unlocks.Add(unlock2);
-                pS.unlockedUpgrades.Add(unlock2);
-            }
-
-            ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
-
-            return newUpgrade;
-        }
-
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
-        {
-            GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
-            newUpgrade.name = "U." + name;
-
-            Upgrade upgrade = newUpgrade.GetComponent<Upgrade>();
-            upgrade.ClearStats();
-
-            upgrade.upgradeName = name;
-            upgrade.statdescription = desc;
-
-            upgrade.statName = change1.name;
-            upgrade.change = change1.value;
-
-            if (desclines != null)
-            {
-                if (desclines.UpperLine != null)
-                {
-                    upgrade.desclines[0] = desclines.UpperLine;
-                }
-                if (desclines.LowerLine != null)
-                {
-                    upgrade.desclines[1] = desclines.LowerLine;
-                }
-            }
-            else
-            {
-                upgrade.desclines[0] = " ";
-                upgrade.desclines[1] = " ";
-            }
-            if (change2 != null)
-            {
-                upgrade.statName2 = change2.name;
-                upgrade.change2 = change2.value;
-            }
-
-            if (change3 != null)
-            {
-                upgrade.statName3 = change3.name;
-                upgrade.change3 = change3.value;
-            }
-
-            if (unlock1 != null)
-            {
-                upgrade.unlocks.Add(unlock1);
-                pS.unlockedUpgrades.Add(unlock1);
-            }
-            if (unlock2 != null)
-            {
-                upgrade.unlocks.Add(unlock2);
-                pS.unlockedUpgrades.Add(unlock2);
-            }
-
-            ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
-
-            return newUpgrade;
-        }
-
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
-        {
-            GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
-            newUpgrade.name = "U." + name;
-
-            Upgrade upgrade = newUpgrade.GetComponent<Upgrade>();
-            upgrade.ClearStats();
-
-            upgrade.upgradeName = name;
-            upgrade.statdescription = desc;
-
-            upgrade.statName = change1.name;
-            upgrade.change = change1.value;
-
-            if (desclines != null)
-            {
-                if (desclines.UpperLine != null)
-                {
-                    upgrade.desclines[0] = desclines.UpperLine;
-                }
-                if (desclines.LowerLine != null)
-                {
-                    upgrade.desclines[1] = desclines.LowerLine;
-                }
-            }
-            else
-            {
-                upgrade.desclines[0] = " ";
-                upgrade.desclines[1] = " ";
-            }
-            if (change2 != null)
-            {
-                upgrade.statName2 = change2.name;
-                upgrade.change2 = change2.value;
-            }
-
-            if (change3 != null)
-            {
-                upgrade.statName3 = change3.name;
-                upgrade.change3 = change3.value;
-            }
-
-            if (change4 != null)
-            {
-                upgrade.statName4 = change4.name;
-                upgrade.change4 = change4.value;
-            }
-
-            if (unlock1 != null)
-            {
-                upgrade.unlocks.Add(unlock1);
-                pS.unlockedUpgrades.Add(unlock1);
-            }
-            if (unlock2 != null)
-            {
-                upgrade.unlocks.Add(unlock2);
-                pS.unlockedUpgrades.Add(unlock2);
-            }
-
-            ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
-
-            return newUpgrade;
-        }
-
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null)
-        {
-            GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
-            newUpgrade.name = "U." + name;
-
-            Upgrade upgrade = newUpgrade.GetComponent<Upgrade>();
-            upgrade.ClearStats();
-
-            upgrade.upgradeName = name;
-            upgrade.statdescription = desc;
-
-            upgrade.statName = change1.name;
-            upgrade.change = change1.value;
-
-            if (desclines != null)
-            {
-                if (desclines.UpperLine != null)
-                {
-                    upgrade.desclines[0] = desclines.UpperLine;
-                }
-                if (desclines.LowerLine != null)
-                {
-                    upgrade.desclines[1] = desclines.LowerLine;
-                }
-            }
-            else
-            {
-                upgrade.desclines[0] = " ";
-                upgrade.desclines[1] = " ";
-            }
-            if (change2 != null)
-            {
-                upgrade.statName2 = change2.name;
-                upgrade.change2 = change2.value;
-            }
-
-            if (change3 != null)
-            {
-                upgrade.statName3 = change3.name;
-                upgrade.change3 = change3.value;
-            }
-
-            if (change4 != null)
-            {
-                upgrade.statName4 = change4.name;
-                upgrade.change4 = change4.value;
-            }
-
-            if (change5 != null)
-            {
-                upgrade.statName5 = change5.name;
-                upgrade.change5 = change5.value;
-            }
-
-            if (unlock1 != null)
-            {
-                upgrade.unlocks.Add(unlock1);
-                pS.unlockedUpgrades.Add(unlock1);
-            }
-            if (unlock2 != null)
-            {
-                upgrade.unlocks.Add(unlock2);
-                pS.unlockedUpgrades.Add(unlock2);
-            }
-
-            ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
-
-            return newUpgrade;
         }
 
         public static bool IsUpgradePresent(this PlayerStats stats, string name)
@@ -480,61 +313,23 @@ namespace DisfigureModApi.UpgradeCreationTools
             PlayerStats stats = upgrade.pS;
             ModdedPlayerStats moddedStats = stats.gameObject.GetComponent<ModdedPlayerStats>();
 
-            if (moddedStats.TryGetStat(upgrade.statName, out ModdedStatWrapper statWrapper))
-            {
-                statWrapper.SetStatValue(upgrade.change);
-                if(upgrade.statName != "")
-                {
-                    ModApi.Log.LogMessage("Setting stat: " + upgrade.statName + " By " + upgrade.change);
-                }
-            }
-            if (moddedStats.TryGetStat(upgrade.statName2, out statWrapper))
-            {
-                statWrapper.SetStatValue(upgrade.change2);
-                if (upgrade.statName2 != "")
-                {
-                    ModApi.Log.LogMessage("Setting stat: " + upgrade.statName2 + " By " + upgrade.change2);
-                }
-            }
-            if (moddedStats.TryGetStat(upgrade.statName3, out statWrapper))
-            {
-                statWrapper.SetStatValue(upgrade.change3);
-                if (upgrade.statName3 != "")
-                {
-                    ModApi.Log.LogMessage("Setting stat: " + upgrade.statName3 + " By " + upgrade.change3);
-                }
-            }
-            if (moddedStats.TryGetStat(upgrade.statName4, out statWrapper))
-            {
-                statWrapper.SetStatValue(upgrade.change4);
-                if (upgrade.statName4 != "")
-                {
-                    ModApi.Log.LogMessage("Setting stat: " + upgrade.statName4 + " By " + upgrade.change4);
-                }
-            }
-            if (moddedStats.TryGetStat(upgrade.statName5, out statWrapper))
-            {
-                statWrapper.SetStatValue(upgrade.change5);
-                if (upgrade.statName5 != "")
-                {
-                    ModApi.Log.LogMessage("Setting stat: " + upgrade.statName5 + " By " + upgrade.change5);
-                }
-            }
+            ApplyStatToModded(moddedStats, upgrade.statName, upgrade.change);
+            ApplyStatToModded(moddedStats, upgrade.statName2, upgrade.change2);
+            ApplyStatToModded(moddedStats, upgrade.statName3, upgrade.change3);
+            ApplyStatToModded(moddedStats, upgrade.statName4, upgrade.change4);
+            ApplyStatToModded(moddedStats, upgrade.statName5, upgrade.change5);
         }
 
-        private static bool TryGetStat(this ModdedPlayerStats allStat, string name, out ModdedStatWrapper statWrapper)
+        private static void ApplyStatToModded(ModdedPlayerStats moddedStats, string name, float change)
         {
-            foreach (var stat in allStat.moddedStats)
+            if (moddedStats.moddedStats.TryGetValue(name, out ModdedStatWrapper statWrapper))
             {
-                if (stat.GetStatName() == name)
+                statWrapper.SetStatValue(change);
+                if (name != "")
                 {
-                    statWrapper = stat;
-                    return true;
+                    ModApi.Log.LogMessage("Setting stat: " + name + " By " + change);
                 }
             }
-
-            statWrapper = null;
-            return false;
         }
     }
 }

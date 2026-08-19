@@ -70,6 +70,9 @@
     <Reference Include="UnityEngine.InputModule">
       <HintPath>..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\unity-libs\UnityEngine.InputModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\unity-libs\UnityEngine.ImageConversionModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\..\mnt\seagate\SteamLibraryD\steamapps\common\Disfigure\BepInEx\interop\UnityEngine.UI.dll</HintPath>
     </Reference>
