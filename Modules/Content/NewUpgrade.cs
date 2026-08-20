@@ -22,7 +22,6 @@ namespace DisfigureModApi.UpgradeCreationTools
     public class NewUpgrade : Upgrade
     {
         public bool isInitial = false;
-
         /// <summary>
         /// Content mods override this to build their upgrade tree into the player.
         /// Called by the API's <c>PlayerStats.Start</c> patch once per match.
@@ -185,32 +184,32 @@ namespace DisfigureModApi.UpgradeCreationTools
             return upgrade;
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, String spriteUpgradeName = "", Color? spriteColor = null)
         {
-            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1);
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, spriteUpgradeName, spriteColor, change1);
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, String spriteUpgradeName = "", Color? spriteColor = null)
         {
-            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2);
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, spriteUpgradeName, spriteColor, change1, change2);
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, String spriteUpgradeName = "", Color? spriteColor = null)
         {
-            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3);
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, spriteUpgradeName, spriteColor, change1, change2, change3);
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, String spriteUpgradeName = "", Color? spriteColor = null)
         {
-            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3, change4);
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, spriteUpgradeName, spriteColor, change1, change2, change3, change4);
         }
 
-        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, Sprite sprite = null)
+        public static GameObject BuildUpgrade(this PlayerStats pS, string name, string desc, UpgradeStatWrapper change1, UpgradeStatWrapper change2, UpgradeStatWrapper change3, UpgradeStatWrapper change4, UpgradeStatWrapper change5, GameObject unlock1 = null, GameObject unlock2 = null, DesclinesWrapper desclines = null, String spriteUpgradeName = "", Color? spriteColor = null)
         {
-            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, sprite, change1, change2, change3, change4, change5);
+            return BuildUpgradeCore(pS, name, desc, unlock1, unlock2, desclines, spriteUpgradeName, spriteColor, change1, change2, change3, change4, change5);
         }
 
-        private static GameObject BuildUpgradeCore(PlayerStats pS, string name, string desc, GameObject unlock1, GameObject unlock2, DesclinesWrapper desclines, Sprite sprite = null, params UpgradeStatWrapper[] changes)
+        private static GameObject BuildUpgradeCore(PlayerStats pS, string name, string desc, GameObject unlock1, GameObject unlock2, DesclinesWrapper desclines, String spriteUpgradeName, Color? spriteColor, params UpgradeStatWrapper[] changes)
         {
             GameObject newUpgrade = GameObject.Instantiate(pS.upgrades[0]);
             newUpgrade.name = "U." + name;
@@ -254,14 +253,86 @@ namespace DisfigureModApi.UpgradeCreationTools
                 pS.unlockedUpgrades.Add(unlock2);
             }
 
-            if (sprite != null)
+            if (!string.IsNullOrEmpty(spriteUpgradeName) || spriteColor.HasValue)
             {
-                upgrade.GetComponent<Image>().sprite = sprite;
+                List<GameObject> allUpgrades = CollectUpgradePool(pS);
+                GameObject source = null;
+
+                if (!string.IsNullOrEmpty(spriteUpgradeName))
+                {
+                    foreach (GameObject candidate in allUpgrades)
+                    {
+                        if (candidate != null && candidate.name.StartsWith(spriteUpgradeName, StringComparison.Ordinal))
+                        {
+                            source = candidate;
+                            break;
+                        }
+                    }
+                    if (source == null)
+                    {
+                        ModApi.Log.LogWarning("Upgrade not found in pool: " + spriteUpgradeName);
+                    }
+                }
+                else
+                {
+                    source = allUpgrades.Count > 0
+                        ? allUpgrades[UnityEngine.Random.Range(0, allUpgrades.Count)]
+                        : null;
+                }
+
+                Image sourceImage = source != null ? source.GetComponent<Image>() : null;
+                Image targetImage = upgrade.GetComponent<Image>();
+                if (sourceImage != null && targetImage != null)
+                {
+                    targetImage.sprite = sourceImage.sprite;
+                    if (spriteColor.HasValue)
+                    {
+                        targetImage.color = spriteColor.Value;
+                    }
+                }
             }
 
             ModApi.Log.LogMessage("Build Upgrade : | " + name + " |");
 
             return newUpgrade;
+        }
+
+        /// <summary>
+        /// Recursively collects every upgrade GameObject reachable from the starting pool,
+        /// following each upgrade's <c>unlocks</c> chain.
+        /// </summary>
+        private static List<GameObject> CollectUpgradePool(PlayerStats pS)
+        {
+            List<GameObject> pool = new List<GameObject>();
+            if (pS.upgrades != null)
+            {
+                foreach (GameObject start in pS.upgrades)
+                {
+                    CollectUpgradeRecursive(start, pool);
+                }
+            }
+            return pool;
+        }
+
+        private static void CollectUpgradeRecursive(GameObject current, List<GameObject> pool)
+        {
+            if (current == null || pool.Contains(current))
+            {
+                return;
+            }
+
+            pool.Add(current);
+
+            Upgrade upgrade = current.GetComponent<Upgrade>();
+            if (upgrade == null || upgrade.unlocks == null)
+            {
+                return;
+            }
+
+            foreach (GameObject next in upgrade.unlocks)
+            {
+                CollectUpgradeRecursive(next, pool);
+            }
         }
 
         private static void ApplyStat(Upgrade upgrade, UpgradeStatWrapper[] changes, int index)
